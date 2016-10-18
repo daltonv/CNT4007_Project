@@ -61,7 +61,7 @@ public class Config {
 			}
 			count++;
 		}
-
+		
 		this.peerCount = count; 
 	}
 }
