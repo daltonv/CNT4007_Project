@@ -64,4 +64,62 @@ public class Config {
 		
 		this.peerCount = count; 
 	}
+
+	public int getFileSize() {
+		return fileSize;
+	}
+
+
+	public int getPieceCount() {
+		return pieceCount;
+	}
+
+
+	public int getPieceSize() {
+		return pieceSize;
+	}
+
+
+	public int getNumberPreferredNeighbors() {
+		return numberPreferredNeighbors;
+	}
+
+
+	public int getUnchokingInterval() {
+		return unchokingInterval;
+	}
+
+
+	public int getOptomisticUnChokingInterval() {
+		return optomisticUnchokingInterval;
+	}
+
+
+	public String getFileName() {
+		return fileName;
+	}
+
+
+	public int getPeerCount() {
+		return peerCount;
+	}
+
+
+	public int getPort(int index) {
+		return ports.get(index);
+	}
+
+	public ArrayList<Integer> getIDs() {
+		return IDs;
+	}
+
+
+	public ArrayList<String> getHosts() {
+		return hosts;
+	}
+
+
+	public ArrayList<Boolean> getHaveFile() {
+		return haveFile;
+	}
 }
