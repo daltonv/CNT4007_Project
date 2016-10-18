@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class Config {
 	//common config vara
-	private int numberPrefferedNeighbors;
+	private int numberPreferredNeighbors;
 	private int unchokingInterval;
 	private int optomisticUnchokingInterval;
 	private String fileName;
@@ -23,7 +23,7 @@ public class Config {
 
 	private int peerCount;
 
-	public Config(String commonInfo, String peerInfo) {
+	public Config(String commonInfo, String peerInfo) throws FileNotFoundException {
 		//read common config
 		Scanner in1= new Scanner(new FileReader(commonInfo));
 		this.numberPreferredNeighbors = Integer.parseInt(in1.nextLine().trim());
@@ -40,7 +40,7 @@ public class Config {
 		}
 
 		//read peer config
-		Scanner.in2= new Scaner(new FileReader(peerInfo));
+		Scanner in2= new Scanner(new FileReader(peerInfo));
 
 		IDs = new ArrayList<Integer>();
 		hosts = new ArrayList<String>();
@@ -57,11 +57,11 @@ public class Config {
 			if (split[3].trim().equals("1")) {
 				this.hasFile.add(true);
 			} else {
-				this.haseFile.add(false);
+				this.hasFile.add(false);
 			}
 			count++;
 		}
 
-		this.PeerCount = count; 
+		this.peerCount = count; 
 	}
 }
