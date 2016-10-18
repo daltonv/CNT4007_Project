@@ -1,7 +1,18 @@
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
 
-
-public class peerProcess {
+public class PeerProcess {
 	private Config config;
 	private int myID;
+
+	public PeerProcess(int myID) throws UnknownHostException, IOException {
+		
+		this.myID = myID;
+		this.config = new Config("common.cfg", "peerinfo.cfg");
+		//TODO bitfield class init
+		//TODO record class init
+	}
 
 }
