@@ -97,7 +97,7 @@ public class Config {
 		return peerCount;
 	}
 
-	public int getPort(int index) {
+	public int getPorts(int index) {
 		return ports.get(index);
 	}
 
@@ -109,7 +109,7 @@ public class Config {
 		return hosts;
 	}
 
-	public ArrayList<Boolean> getHaveFile() {
-		return haveFile;
+	public ArrayList<Boolean> getHasFile() {
+		return hasFile;
 	}
 }

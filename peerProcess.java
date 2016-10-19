@@ -3,7 +3,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class PeerProcess {
+public class PeerProcess implements Runnable{
 	private Config config;
 	private int myID;
 
@@ -16,13 +16,16 @@ public class PeerProcess {
 
 	public void run() {
 		for (int i=0; i<config.getPeerCount(); i++) {
-			Socket = new Socket(config.getHosts(i),config.getPorts().get(i));
+			Socket downSocket = new Socket(config.getHosts().get(i),config.getPorts(i));
 
 		}
 	}
 
 	public static void main(String args[]) throws Exception {
-		PeerProcess peer = new PeerProcess(Integer.parseInt(args[0]));
+		PeerProcess p = new PeerProcess(Integer.parseInt(args[0]));
+		Thread t = new Thread(p);
+		t.start();
+
 	}
 
 }
