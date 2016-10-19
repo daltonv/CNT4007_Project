@@ -15,9 +15,12 @@ public class PeerProcess implements Runnable{
 	}
 
 	public void run() {
-		for (int i=0; i<config.getPeerCount(); i++) {
-			Socket downSocket = new Socket(config.getHosts().get(i),config.getPorts(i));
-
+		try {
+			for (int i=0; i<config.getPeerCount(); i++) {
+				Socket downSocket = new Socket(config.getHosts().get(i),config.getPorts(i));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -25,7 +28,6 @@ public class PeerProcess implements Runnable{
 		PeerProcess p = new PeerProcess(Integer.parseInt(args[0]));
 		Thread t = new Thread(p);
 		t.start();
-
 	}
 
 }
