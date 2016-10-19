@@ -21,4 +21,8 @@ public class PeerProcess {
 		}
 	}
 
+	public static void main(String args[]) throws Exception {
+		PeerProcess peer = new PeerProcess(Integer.parseInt(args[0]));
+	}
+
 }
