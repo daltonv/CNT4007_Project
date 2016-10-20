@@ -1,3 +1,7 @@
 .idea/workspace.xml
 *.xml
 .idea/CNT4007_Project.iml
+logTest.java
+logTest.class
+log_peer_*.log
+*.class
