@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -9,20 +10,18 @@ public class PeerProcess implements Runnable{
 	private int myIndex;
 	private PeerRecord[] neighbors;
 	private int neighborsCount;
+	private HashMap<Integer, PeerRecord> peerMap;
 
 	public PeerProcess(int myID) throws UnknownHostException, IOException {
 		this.myID = myID;
-		this.config = new Config("common.cfg", "peerinfo.cfg");
+		this.config = new Config("common.cfg", "peerinfo.cfg", myID);
+		this.peerMap = config.getPeerMap();
 		this.neighborsCount = config.getPeerCount();
 		neighbors = new PeerRecord[neighborsCount];
 		//TODO bitfield class init
 	}
 
-	public void sendConnection(PeerRecord peer) throws Exception {
-		Socket s = peer.getDownSocket(); //get peers socket
-
-		System.out.println("Test 2");
-		
+	public void sendConnection(Socket s, int peerID) throws Exception {
 		Message shake = new Message(); //create a message for handshacking
 		shake.setID(myID); //set the message ID to myID
 
@@ -30,7 +29,7 @@ public class PeerProcess implements Runnable{
 
 		shake.readHandShake(s); //read the handshake message
 
-		if(shake.getID() != peer.getID()) {
+		if(shake.getID() != peerID) {
 			throw new Exception("Failed to handshake!");
 		}
 
@@ -50,35 +49,26 @@ public class PeerProcess implements Runnable{
 	}
 
 	public void initConnections() throws Exception {
-
-		/*This right here is a great example of why we should switch to using dictionaries for 
-		storing config data*/
-		for (int i=0; i<config.getPeerCount(); i++) {
-
-			if(config.getIDs().get(i) == this.myID) {
-				this.myIndex = i;
-				break;
+		//get the peerMap and sort it by peerID
+		List<PeerRecord> sortedPeers = new ArrayList<PeerRecord>(peerMap.values());
+		Collections.sort(sortedPeers, new Comparator<PeerRecord>() {
+			public int compare(PeerRecord peer1, PeerRecord peer2) {
+				return peer1.peerID - peer2.peerID;
 			}
-		}
+		});
 
-		/*This assumes the peerIDs are ordered. Should probably add code to ensure they are ordered before hand*/
-		for (int i=0; i<config.getPeerCount(); i++) {
-			if(i != myIndex) {
-				
-				//if we appear first we are a server
-				if(myID < config.getIDs().get(i)) {
-					System.out.println("Test 2");
-					ServerSocket serv = new ServerSocket(config.getPorts(i));
-					getConnection(serv);
-				}
-				//if we appear second we are a client
-				else if(myID > config.getIDs().get(i)) {
-					System.out.println("Test 1");
-					Socket downSocket = new Socket(config.getHosts().get(i),config.getPorts(myIndex));
-					neighbors[i] = new PeerRecord(config.getIDs().get(i),downSocket);
-
-					sendConnection(neighbors[i]);
-				}
+		sortedPeers.remove(Integer.valueOf(this.myID)); //ensure my peer info isn't in the list
+		
+		for (PeerRecord peer: sortedPeers) {
+			//if we appear first we are a server
+			if(myID < peer.peerID) {
+				ServerSocket serv = new ServerSocket(peer.portNumber);
+				getConnection(serv);
+			}
+			//if we appear second we are a client
+			else if(myID > peer.peerID) {
+				Socket socket = new Socket(peer.host,config.getMyPortNumber());
+				sendConnection(socket, peer.peerID);
 			}
 		}
 	} 

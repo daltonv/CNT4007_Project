@@ -16,14 +16,15 @@ public class Config {
 	private int pieceCount;
 
 	//peer config vars
-	private ArrayList<Integer> IDs;
-	private ArrayList<String> hosts;
-	private ArrayList<Integer> ports;
-	private ArrayList<Boolean> hasFile;
+	private HashMap<Integer, PeerRecord> peerMap = new HashMap<Integer,PeerRecord>();
+
+	int myPortNumber;
+	String myHost;
+	boolean myHasFile;
 
 	private int peerCount;
 
-	public Config(String commonInfo, String peerInfo) throws FileNotFoundException {
+	public Config(String commonInfo, String peerInfo, int myID) throws FileNotFoundException {
 		//read common config
 		Scanner in1= new Scanner(new FileReader(commonInfo));
 		this.numberPreferredNeighbors = Integer.parseInt(in1.nextLine().trim());
@@ -42,22 +43,33 @@ public class Config {
 		//read peer config
 		Scanner in2= new Scanner(new FileReader(peerInfo));
 
-		IDs = new ArrayList<Integer>();
-		hosts = new ArrayList<String>();
-		ports = new ArrayList<Integer>();
-		hasFile = new ArrayList<Boolean>();
+		int newPeerID = 0;
+		String newHost = null;
+		int newPort = 0;
+		boolean newHasFile = false;
 
 		int count = 0;
 		while(in2.hasNextLine()) {
 			String info = in2.nextLine();
 			String[] split = info.split(" ");
-			this.IDs.add(Integer.parseInt(split[0].trim()));
-			this.hosts.add(split[1].trim());
-			this.ports.add(Integer.parseInt(split[2].trim()));
+			
+			newPeerID = Integer.parseInt(split[0].trim());
+			newHost = split[1].trim();
+			newPort = Integer.parseInt(split[2].trim());
 			if (split[3].trim().equals("1")) {
-				this.hasFile.add(true);
+				newHasFile = true;
 			} else {
-				this.hasFile.add(false);
+				newHasFile = false;
+			}
+
+			if(newPeerID != myID) {
+				PeerRecord newPeer = new PeerRecord(newPeerID,newHost,newPort,newHasFile); //create a new peer record
+				this.peerMap.put(newPeerID, newPeer);	//store the peer record
+			}
+			else {
+				this.myPortNumber = newPort;
+				this.myHost = newHost;
+				this.myHasFile = newHasFile;
 			}
 			count++;
 		}
@@ -97,19 +109,19 @@ public class Config {
 		return peerCount;
 	}
 
-	public int getPorts(int index) {
-		return ports.get(index);
+	public int getMyPortNumber() {
+		return myPortNumber;
 	}
 
-	public ArrayList<Integer> getIDs() {
-		return IDs;
+	public String getMyHost() {
+		return myHost;
 	}
 
-	public ArrayList<String> getHosts() {
-		return hosts;
+	public boolean getHasFile() {
+		return myHasFile;
 	}
 
-	public ArrayList<Boolean> getHasFile() {
-		return hasFile;
+	public HashMap<Integer, PeerRecord> getPeerMap() {
+		return peerMap;
 	}
 }

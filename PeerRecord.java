@@ -5,20 +5,16 @@ Class that will hold information about the local processes's Peers
 */
 public class PeerRecord {
 	
-	private final int ID;
-	private final Socket downSocket;
+	public int peerID;
+	public String host;
+	public int portNumber;
+	public boolean hasFile;
 	
-	public PeerRecord(int ID, Socket downSocket) {
-		
-		this.ID = ID;
-		this.downSocket = downSocket;		
+	public PeerRecord(int peerID, String host, int portNumber, boolean hasFile) {
+		this.peerID = peerID;
+		this.host = host;
+		this.portNumber = portNumber;
+		this.hasFile = hasFile;		
 	}
-	
-	public int getID() {
-		return ID;
-	}
-	
-	public Socket getDownSocket() {
-		return downSocket;
-	}
+
 }
