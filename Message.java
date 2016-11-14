@@ -13,6 +13,7 @@ public class Message{
 	final static int BITFIELD = 5;
 	final static int REQUEST = 6;
 	final static int PIECE = 7;
+	final static int HANDSHAKE = 8;
 
 	private int type;
 	private int length;
@@ -25,21 +26,27 @@ public class Message{
 		payload = null;
 	}
 
-	public void readMessage(Socket s) throws IOException {
-		InputStream in = s.getInputStream();
+	public void readMessage(PeerRecord peer) throws IOException {
 		byte[] lengthByte = new byte[4];
 		int bytesRcvd;
 		int totalBytesRcvd = 0;		
 		while(totalBytesRcvd < 4){
-			bytesRcvd = in.read(lengthByte, totalBytesRcvd, 4 - totalBytesRcvd);
+			bytesRcvd = peer.inStream.read(lengthByte, totalBytesRcvd, 4 - totalBytesRcvd);
 			totalBytesRcvd += bytesRcvd;
 		}
+		if(lengthByte[0] == (byte)'P' && lengthByte[1] == (byte)'2' && lengthByte[2] == (byte)'P' && lengthByte[3] =='F') {
+			byte[] garbage = new byte[28];
+			peer.inStream.read(garbage,0,27);
+			this.type = HANDSHAKE;
+			return;
+		}
 		length = lengthByte[0] & 0xff;
+
 
 		byte[] typebyte = new byte[4];
 		totalBytesRcvd = 0;
 		while(totalBytesRcvd < 4){
-			bytesRcvd = in.read(typebyte, totalBytesRcvd, 4 - totalBytesRcvd);
+			bytesRcvd = peer.inStream.read(typebyte, totalBytesRcvd, 4 - totalBytesRcvd);
 			totalBytesRcvd += bytesRcvd;
 		}
 		type = typebyte[0] & 0xff;
@@ -52,7 +59,7 @@ public class Message{
 		}
 		totalBytesRcvd = 0;
 		while(totalBytesRcvd < length - 4){
-			bytesRcvd = in.read(payload, totalBytesRcvd, length - 4 - totalBytesRcvd);
+			bytesRcvd = peer.inStream.read(payload, totalBytesRcvd, length - 4 - totalBytesRcvd);
 			totalBytesRcvd += bytesRcvd;
 		}
 	}
@@ -93,15 +100,31 @@ public class Message{
 		this.ID = ID;
 	}
 
-	public void readHandShake(Socket s) throws IOException {
+	public int readHandShake(Socket s) throws IOException {
 		Scanner in = new Scanner(s.getInputStream());
-		ID = in.nextInt();
+		int readID = in.nextInt();
+
+		return readID;
 	}
 
-	public void sendHandShake(Socket s) throws IOException {
-		PrintWriter out = new PrintWriter(s.getOutputStream());
-		out.println(ID);
-		out.flush();
+	public void sendHandShake(PeerRecord peer) throws IOException {
+		
+		try {
+			byte[] handshake = new byte[32];
+			
+			String header = "P2PFILESHARINGPROJ";
+			String zerobits = "0000000000";
+			String id = String.valueOf(peer.peerID);
+			while(id.length() != 4){
+				id = "0" + id;
+			}
+
+			peer.outStream.write(handshake,0,handshake.length);
+			peer.sentHandShake = true;
+		}
+		catch(IOException e) {
+			System.out.println("Error with sending handshake. Could not write to stream");
+		}
 	}
 
 	public int getID(){
