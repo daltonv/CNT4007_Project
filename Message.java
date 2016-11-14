@@ -34,10 +34,14 @@ public class Message{
 			bytesRcvd = peer.inStream.read(lengthByte, totalBytesRcvd, 4 - totalBytesRcvd);
 			totalBytesRcvd += bytesRcvd;
 		}
+		for(int i = 0; i<4; i++) {
+			System.out.println(lengthByte[i]+", "+(char)lengthByte[i]);
+		}
 		if(lengthByte[0] == (byte)'P' && lengthByte[1] == (byte)'2' && lengthByte[2] == (byte)'P' && lengthByte[3] =='F') {
 			byte[] garbage = new byte[28];
-			peer.inStream.read(garbage,0,27);
+			peer.inStream.read(garbage,0,28);
 			this.type = HANDSHAKE;
+			System.out.println("Peer: " + peer.peerID + " received handshake");
 			return;
 		}
 		length = lengthByte[0] & 0xff;
@@ -118,6 +122,8 @@ public class Message{
 			while(id.length() != 4){
 				id = "0" + id;
 			}
+			String hsString = header + zerobits + id;
+			handshake = hsString.getBytes();
 
 			peer.outStream.write(handshake,0,handshake.length);
 			peer.sentHandShake = true;

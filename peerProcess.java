@@ -34,8 +34,10 @@ public class PeerProcess implements Runnable{
 		for (PeerRecord peer: sortedPeers) {
 			//if we appear first we are a server
 			if(myID < peer.peerID) {
+				System.out.println("Peer:" + peer.peerID + " listening for hostname " + peer.host + " via socket " + peer.portNumber);
 				ServerSocket serv = new ServerSocket(peer.portNumber); //create server socket
 				Socket socket = serv.accept();	//now listen for requests
+				System.out.println("Peer:" + peer.peerID + " heard news");
 
 				//create input and output data streams, and save them in the peer
 				DataInputStream inStream = new DataInputStream(socket.getInputStream());
@@ -43,11 +45,10 @@ public class PeerProcess implements Runnable{
 				peer.inStream = inStream;
 				peer.outStream = outStream;
 
-				Message shake = new Message();
-				
 			}
 			//if we appear second we are a client
 			else if(myID > peer.peerID) {
+				System.out.println("Peer:" + peer.peerID + " trying to connect to " + peer.host + " via socket " + peer.portNumber);
 				Socket socket = new Socket(peer.host,config.getMyPortNumber());
 				
 				DataInputStream inStream = new DataInputStream(socket.getInputStream());
@@ -81,12 +82,14 @@ public class PeerProcess implements Runnable{
 				}
 				break;
 			default:
+				break;
 		}
 	}
 
 	public void run() {
 		try {
 			initConnections();
+			System.out.println("Connections started");
 
 			long unchokeTime = System.currentTimeMillis();
 			long optTime = System.currentTimeMillis();
@@ -95,11 +98,9 @@ public class PeerProcess implements Runnable{
 
 			while(true){
 				for(PeerRecord peer: peerList) {
-					if(peer.inStream.available() >= 4) {
-						Message gotMessage = new Message();
-						gotMessage.readMessage(peer);
-						handleMessage(peer,gotMessage); 
-					}
+					Message gotMessage = new Message();
+					gotMessage.readMessage(peer);
+					handleMessage(peer,gotMessage); 
 				}
 			}
 		} 
