@@ -16,12 +16,14 @@ public class PeerRecord {
 	public DataInputStream inStream;
 	public DataOutputStream outStream;
 	public boolean sentHandShake;
+	public BitField bitField;
 	
-	public PeerRecord(int peerID, String host, int portNumber, boolean hasFile) {
+	public PeerRecord(int peerID, String host, int portNumber, boolean hasFile, int pieceCount) {
 		this.peerID = peerID;
 		this.host = host;
 		this.portNumber = portNumber;
 		this.hasFile = hasFile;
-		sentHandShake = false;		
+		sentHandShake = false;
+		this.bitField = new BitField(pieceCount);		
 	}
 }

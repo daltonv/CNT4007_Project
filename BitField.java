@@ -1,7 +1,7 @@
 public class BitField {
 	
 	private boolean finished;
-	private int pieceDownedCount;
+	private int piecesCountDowned;
 	private boolean[] bitField;
 	private final int piecesCount;
 	

@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 import java.lang.*;
 import java.util.Scanner;
 
@@ -26,7 +27,46 @@ public class Message{
 		payload = null;
 	}
 
-	public void readMessage(PeerRecord peer) throws IOException {
+	/* Helper function to convert byte[] to an integer value */
+	private static int bytesToInt(byte[] bytes, int length) {
+		int b = 0;
+		for(int i=0;i<length;i++) {
+			b = (b << 8 | bytes[i] & 0xFF);
+		}
+		return b;
+	}
+
+	/* Helper function to convert integer value to a byte[] */
+	private static byte[] intToBytes(int d) {
+		byte[] bytes = new byte[4];
+		bytes[0] = (byte) ((d & 0xFF000000) >> 24);
+		bytes[1] = (byte) ((d & 0xFF0000) >> 16);
+		bytes[2] = (byte) ((d & 0xFF00) >> 8);
+		bytes[3] = (byte) (d & 0xFF);
+		return bytes;
+	}
+
+	public void readMessage(PeerRecord peer, int myID) throws IOException {
+		byte[] temp = new byte[5];
+		peer.inStream.read(temp,0,5);
+
+		if(temp[0] == (byte)'P' && temp[1] == (byte)'2' && temp[2] == (byte)'P' && temp[3] =='F' && temp[4] == (byte)'I') {
+			byte[] garbage = new byte[28];
+			peer.inStream.read(garbage,0,28);
+			this.type = HANDSHAKE;
+		}
+		else {
+			ByteBuffer b = ByteBuffer.wrap(temp);
+			this.length = b.getInt(0); //converts first 4 bytes to an int
+			this.type = (int)temp[4]; //converts last byte to int
+			if(this.length > 1){
+				payload = new byte[this.length - 1];
+				peer.inStream.read(this.payload,0,this.length-1);
+			}
+			System.out.println("Peer:" + myID + " got message of type " + this.type + " and length " + this.length + " from Peer:" + peer.peerID);
+		}
+
+		/*//length segment
 		byte[] lengthByte = new byte[4];
 		int bytesRcvd;
 		int totalBytesRcvd = 0;		
@@ -34,29 +74,20 @@ public class Message{
 			bytesRcvd = peer.inStream.read(lengthByte, totalBytesRcvd, 4 - totalBytesRcvd);
 			totalBytesRcvd += bytesRcvd;
 		}
-		for(int i = 0; i<4; i++) {
-			System.out.println(lengthByte[i]+", "+(char)lengthByte[i]);
-		}
-		if(lengthByte[0] == (byte)'P' && lengthByte[1] == (byte)'2' && lengthByte[2] == (byte)'P' && lengthByte[3] =='F') {
-			byte[] garbage = new byte[28];
-			peer.inStream.read(garbage,0,28);
-			this.type = HANDSHAKE;
-			System.out.println("Peer: " + peer.peerID + " received handshake");
-			return;
-		}
-		length = lengthByte[0] & 0xff;
+		length = bytesToInt(lengthByte,4); //convert to int
 
-
-		byte[] typebyte = new byte[4];
+		//type segment
+		byte[] typebyte = new byte[1];
 		totalBytesRcvd = 0;
-		while(totalBytesRcvd < 4){
-			bytesRcvd = peer.inStream.read(typebyte, totalBytesRcvd, 4 - totalBytesRcvd);
+		while(totalBytesRcvd < 1){
+			bytesRcvd = peer.inStream.read(typebyte, totalBytesRcvd, 1 - totalBytesRcvd);
 			totalBytesRcvd += bytesRcvd;
 		}
-		type = typebyte[0] & 0xff;
+		type = bytesToInt(typebyte,1); //convert to int
 		
+		//type segment
 		if(length > 4){
-			payload = new byte[length - 4];
+			payload = new byte[length - 4]; 
 		}
 		else{
 			payload = null;
@@ -65,31 +96,35 @@ public class Message{
 		while(totalBytesRcvd < length - 4){
 			bytesRcvd = peer.inStream.read(payload, totalBytesRcvd, length - 4 - totalBytesRcvd);
 			totalBytesRcvd += bytesRcvd;
-		}
+		}*/
 	}
 
-	public void sendMessage(Socket s) throws IOException {
+	public void sendMessage(PeerRecord peer) throws IOException {
 		if(payload == null){
-			length = 4;
+			length = 1; //set length to 4 if no payload
 		}
 		else{
-			length = payload.length + 4;
+			length = payload.length + 1; //set length to 1 + payload size
 		}
-		OutputStream out = s.getOutputStream();
-		out.write((byte)length);
-		out.write((byte)type);
+
+		byte[] msg = new byte[5];
+		ByteBuffer b = ByteBuffer.wrap(msg);
+		b.putInt(length);
+		msg[4] = (byte)type;
+
+		peer.outStream.write(msg,0,msg.length);
 		if(payload != null){
-			out.write(payload);
+			peer.outStream.write(payload);
 		}
-		out.flush();
+		peer.outStream.flush();
 	}
 
 	public int getType(){
 		return type;
 	}
 
-	public int setType(int type){
-		return type;
+	public void setType(int type){
+		this.type = type ;
 	}
 
 	public byte[] getPayLoad(){

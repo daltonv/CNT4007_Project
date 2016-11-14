@@ -63,7 +63,7 @@ public class Config {
 			}
 
 			if(newPeerID != myID) {
-				PeerRecord newPeer = new PeerRecord(newPeerID,newHost,newPort,newHasFile); //create a new peer record
+				PeerRecord newPeer = new PeerRecord(newPeerID,newHost,newPort,newHasFile,pieceCount); //create a new peer record
 				this.peerMap.put(newPeerID, newPeer);	//store the peer record
 			}
 			else {
