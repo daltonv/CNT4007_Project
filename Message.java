@@ -27,32 +27,13 @@ public class Message{
 		payload = null;
 	}
 
-	/* Helper function to convert byte[] to an integer value */
-	private static int bytesToInt(byte[] bytes, int length) {
-		int b = 0;
-		for(int i=0;i<length;i++) {
-			b = (b << 8 | bytes[i] & 0xFF);
-		}
-		return b;
-	}
-
-	/* Helper function to convert integer value to a byte[] */
-	private static byte[] intToBytes(int d) {
-		byte[] bytes = new byte[4];
-		bytes[0] = (byte) ((d & 0xFF000000) >> 24);
-		bytes[1] = (byte) ((d & 0xFF0000) >> 16);
-		bytes[2] = (byte) ((d & 0xFF00) >> 8);
-		bytes[3] = (byte) (d & 0xFF);
-		return bytes;
-	}
-
 	public void readMessage(PeerRecord peer, int myID) throws IOException {
 		byte[] temp = new byte[5];
 		peer.inStream.read(temp,0,5);
 
 		if(temp[0] == (byte)'P' && temp[1] == (byte)'2' && temp[2] == (byte)'P' && temp[3] =='F' && temp[4] == (byte)'I') {
-			byte[] garbage = new byte[28];
-			peer.inStream.read(garbage,0,28);
+			byte[] garbage = new byte[27];
+			peer.inStream.read(garbage,0,27);
 			this.type = HANDSHAKE;
 		}
 		else {
@@ -65,38 +46,6 @@ public class Message{
 			}
 			System.out.println("Peer:" + myID + " got message of type " + this.type + " and length " + this.length + " from Peer:" + peer.peerID);
 		}
-
-		/*//length segment
-		byte[] lengthByte = new byte[4];
-		int bytesRcvd;
-		int totalBytesRcvd = 0;		
-		while(totalBytesRcvd < 4){
-			bytesRcvd = peer.inStream.read(lengthByte, totalBytesRcvd, 4 - totalBytesRcvd);
-			totalBytesRcvd += bytesRcvd;
-		}
-		length = bytesToInt(lengthByte,4); //convert to int
-
-		//type segment
-		byte[] typebyte = new byte[1];
-		totalBytesRcvd = 0;
-		while(totalBytesRcvd < 1){
-			bytesRcvd = peer.inStream.read(typebyte, totalBytesRcvd, 1 - totalBytesRcvd);
-			totalBytesRcvd += bytesRcvd;
-		}
-		type = bytesToInt(typebyte,1); //convert to int
-		
-		//type segment
-		if(length > 4){
-			payload = new byte[length - 4]; 
-		}
-		else{
-			payload = null;
-		}
-		totalBytesRcvd = 0;
-		while(totalBytesRcvd < length - 4){
-			bytesRcvd = peer.inStream.read(payload, totalBytesRcvd, length - 4 - totalBytesRcvd);
-			totalBytesRcvd += bytesRcvd;
-		}*/
 	}
 
 	public void sendMessage(PeerRecord peer) throws IOException {
@@ -119,33 +68,6 @@ public class Message{
 		peer.outStream.flush();
 	}
 
-	public int getType(){
-		return type;
-	}
-
-	public void setType(int type){
-		this.type = type ;
-	}
-
-	public byte[] getPayLoad(){
-		return payload;
-	}
-
-	public void setPayLoad(byte[] payload){
-		this.payload = payload;
-	}
-
-	public void setID(int ID){
-		this.ID = ID;
-	}
-
-	public int readHandShake(Socket s) throws IOException {
-		Scanner in = new Scanner(s.getInputStream());
-		int readID = in.nextInt();
-
-		return readID;
-	}
-
 	public void sendHandShake(PeerRecord peer) throws IOException {
 		
 		try {
@@ -166,6 +88,26 @@ public class Message{
 		catch(IOException e) {
 			System.out.println("Error with sending handshake. Could not write to stream");
 		}
+	}
+
+	public int getType(){
+		return type;
+	}
+
+	public void setType(int type){
+		this.type = type ;
+	}
+
+	public byte[] getPayLoad(){
+		return payload;
+	}
+
+	public void setPayLoad(byte[] payload){
+		this.payload = payload;
+	}
+
+	public void setID(int ID){
+		this.ID = ID;
 	}
 
 	public int getID(){

@@ -18,14 +18,15 @@ public class Config {
 	//peer config vars
 	private HashMap<Integer, PeerRecord> peerMap = new HashMap<Integer,PeerRecord>();
 
-	int myPortNumber;
-	String myHost;
-	boolean myHasFile;
+	private int myPortNumber;
+	private String myHost;
+	private boolean myHasFile;
+	private BitField myBitField;
 
 	private int peerCount;
 
 	public Config(String commonInfo, String peerInfo, int myID) throws FileNotFoundException {
-		//read common config
+		//read common config ----------------------------------------
 		Scanner in1= new Scanner(new FileReader(commonInfo));
 		this.numberPreferredNeighbors = Integer.parseInt(in1.nextLine().trim());
 		this.unchokingInterval = Integer.parseInt(in1.nextLine().trim());
@@ -40,7 +41,7 @@ public class Config {
 			this.pieceCount++;
 		}
 
-		//read peer config
+		//read peer config --------------------------------------------
 		Scanner in2= new Scanner(new FileReader(peerInfo));
 
 		int newPeerID = 0;
@@ -70,6 +71,10 @@ public class Config {
 				this.myPortNumber = newPort;
 				this.myHost = newHost;
 				this.myHasFile = newHasFile;
+				if(myHasFile) {
+					myBitField = new BitField(pieceCount);
+					myBitField.turnOnAll();
+				}
 			}
 			count++;
 		}
@@ -123,5 +128,9 @@ public class Config {
 
 	public HashMap<Integer, PeerRecord> getPeerMap() {
 		return peerMap;
+	}
+
+	public BitField getMyBitField() {
+		return myBitField;
 	}
 }

@@ -86,7 +86,7 @@ public class BitField {
 	} 
  	
 	public int getInterestingIndex(BitField b) {
-		int index = -1 ;
+		int index = -1 ; 
 		for (int i = 0; i < piecesCount; i++) {
 			if ((bitField[i] == false) && b.bitField[i] == true) {
 				return i;

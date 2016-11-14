@@ -16,9 +16,9 @@ public class PeerProcess implements Runnable{
 
 	public PeerProcess(int myID) throws UnknownHostException, IOException {
 		this.myID = myID;
-		this.config = new Config("common.cfg", "peerinfo.cfg", myID);
-		this.peerMap = config.getPeerMap();
-		this.myBitField = new BitField(config.getPieceCount());
+		this.config = new Config("common.cfg", "peerinfo.cfg", myID); //read config files
+		this.peerMap = config.getPeerMap(); //get the peer map
+		this.myBitField = config.getMyBitField(); //get my BitField
 		//TODO bitfield class init
 	}
 
