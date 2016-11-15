@@ -63,7 +63,7 @@ public class Message{
 
 		peer.outStream.write(msg,0,msg.length);
 		if(payload != null){
-			peer.outStream.write(payload);
+			peer.outStream.write(payload,0,payload.length);
 		}
 		peer.outStream.flush();
 	}
@@ -83,7 +83,6 @@ public class Message{
 			handshake = hsString.getBytes();
 
 			peer.outStream.write(handshake,0,handshake.length);
-			peer.sentHandShake = true;
 		}
 		catch(IOException e) {
 			System.out.println("Error with sending handshake. Could not write to stream");

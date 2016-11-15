@@ -71,15 +71,21 @@ public class Config {
 				this.myPortNumber = newPort;
 				this.myHost = newHost;
 				this.myHasFile = newHasFile;
-				if(myHasFile) {
-					myBitField = new BitField(pieceCount);
+				myBitField = new BitField(pieceCount);
+				if(this.myHasFile) {
 					myBitField.turnOnAll();
+					//System.out.println(myBitField.getText());
 				}
 			}
 			count++;
 		}
 		
-		this.peerCount = count; 
+		this.peerCount = count;
+
+		//make sure the number of preffered neighbors is at max the neighborCount
+		if (this.peerCount - 1 < this.numberPreferredNeighbors) {
+			this.numberPreferredNeighbors = this.peerCount - 1;
+		} 
 	}
 
 	public int getFileSize() {
@@ -122,7 +128,7 @@ public class Config {
 		return myHost;
 	}
 
-	public boolean getHasFile() {
+	public boolean getMyHasFile() {
 		return myHasFile;
 	}
 

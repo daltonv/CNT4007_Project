@@ -13,17 +13,28 @@ public class PeerRecord {
 	public String host;
 	public int portNumber;
 	public boolean hasFile;
+	
 	public DataInputStream inStream;
 	public DataOutputStream outStream;
-	public boolean sentHandShake;
+
 	public BitField bitField;
+	public int piecesSinceLastRound;
+	
+	public boolean sentHandShake;
+	public boolean isInterested;
+	public boolean isChoked;
+	public boolean isOptimisticallyUnchoked;
 	
 	public PeerRecord(int peerID, String host, int portNumber, boolean hasFile, int pieceCount) {
 		this.peerID = peerID;
 		this.host = host;
 		this.portNumber = portNumber;
 		this.hasFile = hasFile;
-		sentHandShake = false;
-		this.bitField = new BitField(pieceCount);		
+		this.sentHandShake = false;
+		this.bitField = new BitField(pieceCount);
+		this.isInterested = false;
+		this.piecesSinceLastRound = 0;
+		this.isChoked = true;
+		this.isOptimisticallyUnchoked = false;		
 	}
 }
