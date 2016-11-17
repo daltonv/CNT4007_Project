@@ -4,6 +4,7 @@ import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+
 public class PeerProcess implements Runnable{
 	private Config config; //my configuration info
 	private int myID; //myID
@@ -76,10 +77,6 @@ public class PeerProcess implements Runnable{
 	public void handleMessage(PeerRecord peer, Message gotMessage) throws Exception {
 		int interestStatus = 0;
 
-		int stub = 0;
-		int index;
-		ByteBuffer buf;
-
 		switch (gotMessage.getType()) {
 			case Message.HANDSHAKE:
 				System.out.println("Peer:" + myID + " got handshake from Peer:" + peer.peerID);
@@ -127,21 +124,46 @@ public class PeerProcess implements Runnable{
 					}
 					interest.sendMessage(peer); //send message
 				}
+				
 				break;
 
 			case Message.INTERESTED:
 				peer.isInterested = true;
+				
 				break;
 
 			case Message.NOTINTERESTED:
 				peer.isInterested = false;
+				
 				break;
 
 			case Message.CHOKE:
 				//remove sender
 				break;
+			
 			case Message.UNCHOKE:
-				//remove
+				int pieceIndex = myBitField.getInterestingIndex(peer.bitField); //get a pieceIndex I need
+				ByteBuffer b = ByteBuffer.allocate(4); //setup byte buffer for payload
+				byte[] msg = b.putInt(pieceIndex).array(); //put pieceIndex in byte[]
+
+				Message requestMsg = new Message(); //create message object
+				requestMsg.setType(Message.REQUEST); //set message type to REQUEST
+				requestMsg.setPayLoad(msg); //set payload to byte[] of pieceIndex
+				requestMsg.sendMessage(peer); //send the message
+
+				System.out.println("Peer:" + myID + " sent request for piece " + pieceIndex + " to Peer:" + peer.peerID);
+
+				break;
+
+			case Message.REQUEST:
+				ByteBuffer b = ByteBuffer.wrap(gotMessage.getPayload());
+				int pieceIndex = buf.getInt(0);
+				System.out.println("Peer:" + myID + " received request for piece " + pieceIndec + " from Peer:" + peer.peerID);
+
+				//send piece of pieceIndex to peer
+
+				break;
+
 			default:
 				break;
 		}

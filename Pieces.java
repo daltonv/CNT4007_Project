@@ -4,12 +4,11 @@ import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class FileManager() {
-	byte[][] pieces;
-	File downloadFile;
+public class Pieces {
+	private byte[][] piecesStruct;
 
-	public FileManager(int numberOfPieces, int pieceSize, String fileName) {
-		pieces = new byte[numberOfPieces][piecesSize + 4]; //array holding payloads plus an index byte
+	public Pieces(int numberOfPieces, int pieceSize, String fileName) {
+		piecesStruct = new byte[numberOfPieces][piecesSize + 4]; //array holding payloads plus an index byte
 		File tempFile = new File(fileName);
 
 		FileInputStream fs = new FileInputStream(tempFile);
@@ -24,5 +23,5 @@ public class FileManager() {
 			}
 		}
 		fs.close(); //close the file stream
-	}
+	} 
 }
