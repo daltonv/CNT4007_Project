@@ -156,9 +156,9 @@ public class PeerProcess implements Runnable{
 				break;
 
 			case Message.REQUEST:
-				ByteBuffer b = ByteBuffer.wrap(gotMessage.getPayload());
-				int pieceIndex = buf.getInt(0);
-				System.out.println("Peer:" + myID + " received request for piece " + pieceIndec + " from Peer:" + peer.peerID);
+				//ByteBuffer b = ByteBuffer.wrap(gotMessage.getPayload());
+				//int pieceIndex = buf.getInt(0);
+				//System.out.println("Peer:" + myID + " received request for piece " + pieceIndec + " from Peer:" + peer.peerID);
 
 				//send piece of pieceIndex to peer
 
@@ -304,10 +304,10 @@ public class PeerProcess implements Runnable{
 		}
 	}
 
-	/*public static void main(String args[]) throws Exception {
+	public static void main(String args[]) throws Exception {
 		PeerProcess p = new PeerProcess(Integer.parseInt(args[0]));
 		Thread t = new Thread(p);
 		t.start();
-	}*/
+	}
 
 }
