@@ -156,12 +156,21 @@ public class PeerProcess implements Runnable{
 				break;
 
 			case Message.REQUEST:
-				//ByteBuffer b = ByteBuffer.wrap(gotMessage.getPayload());
-				//int pieceIndex = buf.getInt(0);
-				//System.out.println("Peer:" + myID + " received request for piece " + pieceIndec + " from Peer:" + peer.peerID);
+				ByteBuffer b2 = ByteBuffer.wrap(gotMessage.getPayLoad());
+				int pieceIndex2 = b2.getInt(0);
+				
+				if(pieceIndex2 != -1) {
+					System.out.println("Peer:" + myID + " received request for piece " + pieceIndex2 + " from Peer:" + peer.peerID);
+					
+					Pieces piece = myFileManager.getPiece(pieceIndex2); //get the piece at the index
+					Message pieceMsg = new Message();
+					pieceMsg.sendPiece(peer, piece);
 
-				//send piece of pieceIndex to peer
-
+					System.out.println("Peer:" + myID + " sent piece " + pieceIndex2 + " to Peer:" + peer.peerID);
+				}
+				else {
+					System.out.println("Peer:" + myID + " received a request from Peer:" + peer.peerID + " but they already have that piece");
+				}
 				break;
 
 			default:

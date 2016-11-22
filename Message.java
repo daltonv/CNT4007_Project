@@ -68,6 +68,17 @@ public class Message{
 		peer.outStream.flush();
 	}
 
+	public void sendPiece(PeerRecord peer, Pieces piece) throws IOException {
+		byte[] msg = new byte[piece.getPieceBytes().length + 4]; //create byte array for payload
+		ByteBuffer b = ByteBuffer.wrap(msg); //create byte buffer for payload
+		b.putInt(piece.getPieceIndex()); //put pieceIndex in the the first 4 bytes of the payload
+		System.arraycopy(piece.getPieceBytes(),0,msg,4,piece.getPieceBytes().length); //copy the piece byte array to the payload array 
+		
+		this.type = Message.PIECE; //set type to piece
+		this.payload = msg; //set the payload to msg
+		sendMessage(peer); //send the message
+	}
+
 	public void sendHandShake(PeerRecord peer) throws IOException {
 		
 		try {

@@ -24,7 +24,7 @@ public class FileManager {
 		this.fileSize = fileSize;
 	}
 
-	public Pieces readPiece(int index) throws IOException {
+	public Pieces getPiece(int index) throws IOException {
 		int length = 0;
 		if(index == numberOfPieces - 1) {
 			length = fileSize - pieceSize*index; //make the length the size of the remaing bytes if this is the last index
