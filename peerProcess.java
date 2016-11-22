@@ -12,7 +12,7 @@ public class PeerProcess implements Runnable{
 	private String myHost;
 	private boolean myHasFile;
 	private BitField myBitField; //my own BitField
-	private byte[][] pieces; //byte array holding file
+	private FileManager myFileManager;
 
 	private HashMap<Integer, PeerRecord> peerMap;
 
@@ -27,7 +27,7 @@ public class PeerProcess implements Runnable{
 		this.peerMap = config.getPeerMap(); //get the peer map
 		this.myBitField = config.getMyBitField(); //get my BitField
 		this.myHasFile = config.getMyHasFile();
-		//TODO bitfield class init
+		this.myFileManager = config.getMyFileManager();
 	}
 
 	public void initConnections() throws Exception {

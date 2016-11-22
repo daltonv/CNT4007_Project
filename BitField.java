@@ -5,8 +5,7 @@ public class BitField {
 	private boolean[] bitField;
 	private final int piecesCount;
 	
-	public BitField(int piecesCount) {
-		
+	public BitField(int piecesCount) {	
 		finished = false;
 		piecesCountDowned = 0;
 		this.piecesCount = piecesCount;

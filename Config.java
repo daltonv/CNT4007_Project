@@ -22,6 +22,7 @@ public class Config {
 	private String myHost;
 	private boolean myHasFile;
 	private BitField myBitField;
+	private FileManager myFileManager;
 
 	private int peerCount;
 
@@ -72,6 +73,7 @@ public class Config {
 				this.myHost = newHost;
 				this.myHasFile = newHasFile;
 				myBitField = new BitField(pieceCount);
+				myFileManager = new FileManager(pieceCount, pieceSize, fileSize, fileName, newPeerID);
 				if(this.myHasFile) {
 					myBitField.turnOnAll();
 					//System.out.println(myBitField.getText());
@@ -138,5 +140,9 @@ public class Config {
 
 	public BitField getMyBitField() {
 		return myBitField;
+	}
+
+	public FileManager getMyFileManager() {
+		return myFileManager;
 	}
 }
