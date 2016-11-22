@@ -1,27 +1,23 @@
-import java.io.*;
-import java.net.*;
-import java.nio.*;
-import java.util.*;
-import java.util.concurrent.*;
+/*
+	This class is just used to contain the byteStream for each piece along with
+	an integer representing the "index" of the piece relative to the other pieces
+*/
+
 
 public class Pieces {
-	private byte[][] piecesStruct;
+	private int pieceIndex;
+	private byte[] pieceBytes;
 
-	public Pieces(int numberOfPieces, int pieceSize, String fileName) {
-		piecesStruct = new byte[numberOfPieces][piecesSize + 4]; //array holding payloads plus an index byte
-		File tempFile = new File(fileName);
+	public Pieces(int pieceIndex, byte[] pieceBytes) {
+		this.pieceIndex = this.pieceIndex;
+		this.pieceBytes = pieceBytes;
+	}
 
-		FileInputStream fs = new FileInputStream(tempFile);
-		for(int i = 0; i<numberOfPieces; i++) {
-			ByteBuffer b = ByteBuffer.allocate(4); //allocate bytebuffer of index byte
-			b.putInt(0,i) //make index into a byte
-			System.arraycopy(b.array(),0,pieces[i],0,4); //place byte array into piecesStruct
+	public byte[] getPieceBytes() {
+		return pieceBytes;
+	}
 
-			//fill the rest of the bytes with file contents, if any
-			for(int j = 4; j<pieceSize+4; j++) {
-				pieces[i][j] = (byte)fs.read();
-			}
-		}
-		fs.close(); //close the file stream
+	public int getPieceIndex() {
+		return pieceIndex;
 	} 
 }
