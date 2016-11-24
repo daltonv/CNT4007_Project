@@ -76,65 +76,25 @@ public class PeerProcess implements Runnable{
 
 	public void handleMessage(PeerRecord peer, Message gotMessage) throws Exception {
 		int interestStatus = 0;
+		ByteBuffer b;
 
+		/* The switch statement does work for this but I think there could be a better way to organize this
+		perhaps each case has a function */
 		switch (gotMessage.getType()) {
 			case Message.HANDSHAKE:
-				System.out.println("Peer:" + myID + " got handshake from Peer:" + peer.peerID);
-				if(peer.sentHandShake) {
-					System.out.println("Peer:" + myID + " sending bitfield to Peer:" + peer.peerID);
-					Message sendBitField = new Message(); //create message for sending bitfield
-					sendBitField.setType(Message.BITFIELD); //set message type to bitfield
-					sendBitField.setPayLoad(myBitField.toBytes()); //set the payload bitfield bytes
-					sendBitField.sendMessage(peer); //send bitfield
-				}
-				else {
-					System.out.println("Peer:" + myID + " sending handshake 2 to Peer:" + peer.peerID);
-					gotMessage.sendHandShake(peer);
-				}
+				handleHandshake(peer,gotMessage);
 				break;
 
 			case Message.BITFIELD:
-				peer.bitField.setBitField(gotMessage.getPayLoad()); //update the bitfield to match
-				System.out.println("Peer:" + peer.peerID + " bitfield is " + peer.bitField.getText());
-				if(!peer.sentHandShake) {
-					System.out.println("Peer:" + myID + " sending bitfield to Peer:" + peer.peerID);
-					Message sendBitField = new Message(); //create message for sending bitfield
-					sendBitField.setType(Message.BITFIELD); //set message type to bitfield
-					sendBitField.setPayLoad(myBitField.toBytes()); //set the payload bitfield bytes
-					sendBitField.sendMessage(peer); //send bitfield
-				}
-				else {
-					int interestingIndex = myBitField.getInterestingIndex(peer.bitField); //get interesting index compared to my bitfield
-					Message interest = new Message(); //create message for interest
-					if (interestingIndex != -1) {
-						System.out.println("Peer:" + myID + " is interested in Peer:" + peer.peerID);
-						
-						peer.isInterested = true;	//set peer to be interested
-						interestedList.put(peer.peerID,peer);	//add to interestedList
-
-						interest.setType(Message.INTERESTED); //if interested set type to interested
-					}
-					else {
-						System.out.println("Peer:" + myID + " is not interested in Peer:" + peer.peerID);
-
-						peer.isInterested = false; //set peer to be not interested
-						interestedList.remove(peer.peerID);
-
-						interest.setType(Message.NOTINTERESTED); //set type to uninterested
-					}
-					interest.sendMessage(peer); //send message
-				}
-				
+				handleBitfield(peer,gotMessage);
 				break;
 
 			case Message.INTERESTED:
 				peer.isInterested = true;
-				
 				break;
 
 			case Message.NOTINTERESTED:
 				peer.isInterested = false;
-				
 				break;
 
 			case Message.CHOKE:
@@ -142,40 +102,114 @@ public class PeerProcess implements Runnable{
 				break;
 			
 			case Message.UNCHOKE:
-				int pieceIndex = myBitField.getInterestingIndex(peer.bitField); //get a pieceIndex I need
-				ByteBuffer b = ByteBuffer.allocate(4); //setup byte buffer for payload
-				byte[] msg = b.putInt(pieceIndex).array(); //put pieceIndex in byte[]
-
-				Message requestMsg = new Message(); //create message object
-				requestMsg.setType(Message.REQUEST); //set message type to REQUEST
-				requestMsg.setPayLoad(msg); //set payload to byte[] of pieceIndex
-				requestMsg.sendMessage(peer); //send the message
-
-				System.out.println("Peer:" + myID + " sent request for piece " + pieceIndex + " to Peer:" + peer.peerID);
-
+				handleUnchoke(peer,gotMessage);
 				break;
 
 			case Message.REQUEST:
-				ByteBuffer b2 = ByteBuffer.wrap(gotMessage.getPayLoad());
-				int pieceIndex2 = b2.getInt(0);
-				
-				if(pieceIndex2 != -1) {
-					System.out.println("Peer:" + myID + " received request for piece " + pieceIndex2 + " from Peer:" + peer.peerID);
-					
-					Pieces piece = myFileManager.getPiece(pieceIndex2); //get the piece at the index
-					Message pieceMsg = new Message();
-					pieceMsg.sendPiece(peer, piece);
+				handleRequest(peer,gotMessage);
+				break;
 
-					System.out.println("Peer:" + myID + " sent piece " + pieceIndex2 + " to Peer:" + peer.peerID);
-				}
-				else {
-					System.out.println("Peer:" + myID + " received a request from Peer:" + peer.peerID + " but they already have that piece");
-				}
+			case Message.PIECE:
+				handlePiece(peer,gotMessage);
 				break;
 
 			default:
 				break;
 		}
+	}
+
+	public void handleHandshake(PeerRecord peer, Message gotMessage) throws Exception {
+		System.out.println("Peer:" + myID + " got handshake from Peer:" + peer.peerID);
+		if(peer.sentHandShake) {
+			System.out.println("Peer:" + myID + " sending bitfield to Peer:" + peer.peerID);
+			Message sendBitField = new Message(); //create message for sending bitfield
+			sendBitField.setType(Message.BITFIELD); //set message type to bitfield
+			sendBitField.setPayLoad(myBitField.toBytes()); //set the payload bitfield bytes
+			sendBitField.sendMessage(peer); //send bitfield
+		}
+		else {
+			System.out.println("Peer:" + myID + " sending handshake 2 to Peer:" + peer.peerID);
+			gotMessage.sendHandShake(peer);
+		}
+	}
+
+	public void handleBitfield(PeerRecord peer, Message gotMessage) throws Exception {
+		peer.bitField.setBitField(gotMessage.getPayLoad()); //update the bitfield to match
+		System.out.println("Peer:" + peer.peerID + " bitfield is " + peer.bitField.getText());
+		if(!peer.sentHandShake) {
+			System.out.println("Peer:" + myID + " sending bitfield to Peer:" + peer.peerID);
+			Message sendBitField = new Message(); //create message for sending bitfield
+			sendBitField.setType(Message.BITFIELD); //set message type to bitfield
+			sendBitField.setPayLoad(myBitField.toBytes()); //set the payload bitfield bytes
+			sendBitField.sendMessage(peer); //send bitfield
+		}
+		else {
+			int interestingIndex = myBitField.getInterestingIndex(peer.bitField); //get interesting index compared to my bitfield
+			Message interest = new Message(); //create message for interest
+			if (interestingIndex != -1) {
+				System.out.println("Peer:" + myID + " is interested in Peer:" + peer.peerID);
+				
+				peer.isInterested = true;	//set peer to be interested
+				interestedList.put(peer.peerID,peer);	//add to interestedList
+
+				interest.setType(Message.INTERESTED); //if interested set type to interested
+			}
+			else {
+				System.out.println("Peer:" + myID + " is not interested in Peer:" + peer.peerID);
+
+				peer.isInterested = false; //set peer to be not interested
+				interestedList.remove(peer.peerID);
+
+				interest.setType(Message.NOTINTERESTED); //set type to uninterested
+			}
+			interest.sendMessage(peer); //send message
+		}
+	}
+
+	public void handleUnchoke(PeerRecord peer, Message gotMessage) throws Exception {
+		int pieceIndex = myBitField.getInterestingIndex(peer.bitField); //get a pieceIndex I need
+		ByteBuffer b = ByteBuffer.allocate(4); //setup byte buffer for payload
+		byte[] msg = b.putInt(pieceIndex).array(); //put pieceIndex in byte[]
+
+		Message requestMsg = new Message(); //create message object
+		requestMsg.setType(Message.REQUEST); //set message type to REQUEST
+		requestMsg.setPayLoad(msg); //set payload to byte[] of pieceIndex
+		requestMsg.sendMessage(peer); //send the message
+
+		System.out.println("Peer:" + myID + " sent request for piece " + pieceIndex + " to Peer:" + peer.peerID);
+	}
+
+	public void handleRequest(PeerRecord peer, Message gotMessage) throws Exception {
+		ByteBuffer b = ByteBuffer.wrap(gotMessage.getPayLoad());
+		int pieceIndex = b.getInt(0);
+		
+		if(pieceIndex != -1) {
+			System.out.println("Peer:" + myID + " received request for piece " + pieceIndex + " from Peer:" + peer.peerID);
+			
+			Pieces piece = myFileManager.getPiece(pieceIndex); //get the piece at the index
+			Message pieceMsg = new Message();
+			pieceMsg.sendPiece(peer, piece);
+
+			System.out.println("Peer:" + myID + " sent piece " + pieceIndex + " to Peer:" + peer.peerID);
+		}
+		else {
+			System.out.println("Peer:" + myID + " received a request from Peer:" + peer.peerID + " but they already have that piece");
+		}
+	}
+
+	public void handlePiece(PeerRecord peer, Message gotMessage) throws Exception {
+		byte[] payload = gotMessage.getPayLoad(); //create byte array for the message payload
+				
+		ByteBuffer b = ByteBuffer.wrap(payload);
+		int pieceIndex = b.getInt(0);
+		byte[] pieceBytes = new byte[payload.length - 4];
+		System.arraycopy(payload,4,pieceBytes,0,payload.length-4);	
+		Pieces piece = new Pieces(pieceIndex,pieceBytes);
+
+		myFileManager.putPiece(piece);
+		myBitField.turnOnBit(pieceIndex);
+
+		peer.piecesSinceLastRound++;
 	}
 
 	public void unchokingUpdate() throws Exception {

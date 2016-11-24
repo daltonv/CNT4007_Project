@@ -52,7 +52,7 @@ public class FileManager {
 		return piece;
 	}
 
-	public void writePiece(Pieces piece) throws IOException {
+	public void putPiece(Pieces piece) throws IOException {
 		int offSet = piece.getPieceIndex()*pieceSize; //get the location in the file to read too
 		int length = piece.getPieceBytes().length; //get the length of the piece
 

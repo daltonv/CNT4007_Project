@@ -68,6 +68,7 @@ public class Message{
 		peer.outStream.flush();
 	}
 
+	/*This function handles sending pieces since their payloads need some special configuration */
 	public void sendPiece(PeerRecord peer, Pieces piece) throws IOException {
 		byte[] msg = new byte[piece.getPieceBytes().length + 4]; //create byte array for payload
 		ByteBuffer b = ByteBuffer.wrap(msg); //create byte buffer for payload
