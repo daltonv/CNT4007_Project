@@ -73,7 +73,7 @@ public class Config {
 				this.myHost = newHost;
 				this.myHasFile = newHasFile;
 				myBitField = new BitField(pieceCount);
-				myFileManager = new FileManager(pieceCount, pieceSize, fileSize, fileName, newPeerID);
+				myFileManager = new FileManager(pieceCount, pieceSize, fileSize, fileName, newPeerID, myHasFile);
 				if(this.myHasFile) {
 					myBitField.turnOnAll();
 					//System.out.println(myBitField.getText());

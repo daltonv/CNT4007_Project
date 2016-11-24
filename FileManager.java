@@ -5,19 +5,26 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class FileManager {
+	private File f;
 	private RandomAccessFile file;
 	private int numberOfPieces;
 	private int pieceSize;
 	private int fileSize;
 
-	public FileManager(int numberOfPieces, int pieceSize, int fileSize, String fileName, int peerID) throws FileNotFoundException {
+	public FileManager(int numberOfPieces, int pieceSize, int fileSize, String fileName, int peerID, boolean hasFile) throws FileNotFoundException {
 		String directory = "peer_" + peerID + "/";
 		File dir = new File(directory);
 		if(!dir.exists()) {
 			dir.mkdirs();
 			System.out.println("Peer:" + peerID + " creating directory " + directory);
 		}
-		file = new RandomAccessFile(directory + fileName, "rw");
+		
+		f = new File(directory + fileName);
+		if(hasFile && !f.exists() && !f.isDirectory()) {
+			System.out.println("Peer:" + peerID + " should have the file, but it doesn't");
+			System.exit(0);
+		}
+		file = new RandomAccessFile(f, "rw");
 		
 		this.numberOfPieces = numberOfPieces;
 		this.pieceSize = pieceSize;
