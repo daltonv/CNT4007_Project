@@ -81,48 +81,53 @@ public class PeerProcess implements Runnable{
 		}
 	}
 
-	public synchronized void handleMessage(PeerRecord peer, Message gotMessage) throws Exception {
-		/* The switch statement does work for this but I think there could be a better way to organize this
-		perhaps each case has a function */
-		switch (gotMessage.getType()) {
-			case Message.HANDSHAKE:
-				handleHandshake(peer,gotMessage);
-				break;
-
-			case Message.BITFIELD:
-				handleBitfield(peer,gotMessage);
-				break;
-
-			case Message.INTERESTED:
-				peer.isInterested = true;
-				break;
-
-			case Message.NOTINTERESTED:
-				peer.isInterested = false;
-				break;
-
-			case Message.CHOKE:
-				//remove sender
-				break;
-			
-			case Message.UNCHOKE:
-				handleUnchoke(peer,gotMessage);
-				break;
-
-			case Message.REQUEST:
-				handleRequest(peer,gotMessage);
-				break;
-
-			case Message.PIECE:
-				handlePiece(peer,gotMessage);
-				break;
-				
-			case Message.HAVE:
-				handleHave(peer,gotMessage);
-				break;
-				
-			default:
-				break;
+	public synchronized void handleMessages(List<PeerRecord> peerList) throws Exception {
+		for(PeerRecord peer: peerList) {
+			if(peer.inStream.available() >= 5) {
+				Message gotMessage = new Message(config.getPieceSize()); //create message object for received message
+				gotMessage.readMessage(peer,myID); //read message
+		
+				switch (gotMessage.getType()) {
+					case Message.HANDSHAKE:
+						handleHandshake(peer,gotMessage);
+						break;
+		
+					case Message.BITFIELD:
+						handleBitfield(peer,gotMessage);
+						break;
+		
+					case Message.INTERESTED:
+						peer.isInterested = true;
+						break;
+		
+					case Message.NOTINTERESTED:
+						peer.isInterested = false;
+						break;
+		
+					case Message.CHOKE:
+						//remove sender
+						break;
+					
+					case Message.UNCHOKE:
+						handleUnchoke(peer,gotMessage);
+						break;
+		
+					case Message.REQUEST:
+						handleRequest(peer,gotMessage);
+						break;
+		
+					case Message.PIECE:
+						handlePiece(peer,gotMessage);
+						break;
+						
+					case Message.HAVE:
+						handleHave(peer,gotMessage);
+						break;
+						
+					default:
+						break;
+				}
+			}
 		}
 	}
 
@@ -360,18 +365,7 @@ public class PeerProcess implements Runnable{
 			List<PeerRecord> peerList = new ArrayList<PeerRecord>(peerMap.values());
 
 			while(true){
-				for(PeerRecord peer: peerList) {
-					if(peer.inStream.available() >= 5) {
-						Message gotMessage = new Message(config.getPieceSize()); //create message object for received message
-						gotMessage.readMessage(peer,myID); //read message
-						//if(gotMessage.getLength() <= (config.getPieceSize() + 5) && gotMessage.getLength() >= 0) {
-							handleMessage(peer,gotMessage);  //handle the message
-						//}
-						//else {
-							//System.out.println("Peer:" + myID + " received something weird from Peer:" + peer.peerID);
-						//}
-					}
-				}
+				handleMessages(peerList);
 
 				if(System.currentTimeMillis() > unchokeTime + 1000*config.getUnchokingInterval()) {
 					unchokingUpdate();

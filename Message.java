@@ -31,20 +31,34 @@ public class Message{
 
 	public synchronized void readMessage(PeerRecord peer, int myID) throws IOException {
 		byte[] temp = new byte[5];
-		peer.inStream.read(temp,0,5);
+		int bytesRcvd;
+		int totalBytesRcvd = 0;
+		
+		while(totalBytesRcvd < 5) {
+			bytesRcvd = peer.inStream.read(temp,totalBytesRcvd,5 - totalBytesRcvd);
+			totalBytesRcvd += bytesRcvd;
+		}
 
 		if(temp[0] == (byte)'P' && temp[1] == (byte)'2' && temp[2] == (byte)'P' && temp[3] =='F' && temp[4] == (byte)'I') {
 			byte[] garbage = new byte[27];
-			peer.inStream.read(garbage,0,27);
+			totalBytesRcvd = 0;
+			while(totalBytesRcvd < 27) {
+				bytesRcvd = peer.inStream.read(garbage,totalBytesRcvd,27 - totalBytesRcvd);
+				totalBytesRcvd += bytesRcvd;
+			}
 			this.type = HANDSHAKE;
 		}
 		else {
 			ByteBuffer b = ByteBuffer.wrap(temp);
-			this.length = b.getInt(0); //converts first 4 bytes to an int
+			this.length = b.getInt(); //converts first 4 bytes to an int
 			this.type = (int)temp[4]; //converts last byte to int
 			if(this.length > 1){
-				payload = new byte[this.length - 1];
-				peer.inStream.read(this.payload,0,this.length-1);
+				this.payload = new byte[this.length - 1];
+				totalBytesRcvd = 0;
+				while(totalBytesRcvd < this.length - 1) {
+					bytesRcvd = peer.inStream.read(this.payload,totalBytesRcvd,this.length - 1 - totalBytesRcvd);
+					totalBytesRcvd += bytesRcvd;
+				}
 			}
 			
 			System.out.println("Peer:" + myID + " got message of type " + this.type + " and length " + this.length + " from Peer:" + peer.peerID);
