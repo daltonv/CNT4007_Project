@@ -16,6 +16,7 @@ public class PeerRecord {
 	
 	public DataInputStream inStream;
 	public DataOutputStream outStream;
+	public Socket socket;
 
 	public BitField bitField;
 	public int piecesSinceLastRound;

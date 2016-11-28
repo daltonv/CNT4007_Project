@@ -9,7 +9,7 @@ public class Pieces {
 	private byte[] pieceBytes;
 
 	public Pieces(int pieceIndex, byte[] pieceBytes) {
-		this.pieceIndex = this.pieceIndex;
+		this.pieceIndex = pieceIndex;
 		this.pieceBytes = pieceBytes;
 	}
 

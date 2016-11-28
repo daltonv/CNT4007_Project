@@ -16,10 +16,10 @@ public class PeerProcess implements Runnable{
 
 	private HashMap<Integer, PeerRecord> peerMap;
 
-	private HashMap<Integer, PeerRecord> interestedList = new HashMap<Integer ,PeerRecord>(); //list of peers with interesting pieces
-	private HashMap<Integer, PeerRecord> interestingList = new HashMap<Integer, PeerRecord>(); //list of peers interested in my pieces
-	private HashMap<Integer, PeerRecord> senderList = new HashMap<Integer, PeerRecord>(); //list of peers sending me pieces
-	private HashMap<Integer, PeerRecord> neighborList = new HashMap<Integer, PeerRecord>(); //list of peers I am sending data to
+	//private HashMap<Integer, PeerRecord> interestedList = new HashMap<Integer ,PeerRecord>(); //list of peers with interesting pieces
+	//private HashMap<Integer, PeerRecord> interestingList = new HashMap<Integer, PeerRecord>(); //list of peers interested in my pieces
+	//private HashMap<Integer, PeerRecord> senderList = new HashMap<Integer, PeerRecord>(); //list of peers sending me pieces
+	//private HashMap<Integer, PeerRecord> neighborList = new HashMap<Integer, PeerRecord>(); //list of peers I am sending data to
 
 	public PeerProcess(int myID) throws UnknownHostException, IOException {
 		this.myID = myID;
@@ -46,13 +46,17 @@ public class PeerProcess implements Runnable{
 				System.out.println("Peer:" + myID + " listening for hostname " + peer.host + " via socket " + peer.portNumber);
 				ServerSocket serv = new ServerSocket(peer.portNumber); //create server socket
 				Socket socket = serv.accept();	//now listen for requests
+				serv.close(); //close the server socket now that it is not needed
 				System.out.println("Peer:" + myID + " heard news");
 
 				//create input and output data streams, and save them in the peer
-				DataInputStream inStream = new DataInputStream(socket.getInputStream());
 				DataOutputStream outStream = new DataOutputStream(socket.getOutputStream());
+				outStream.flush();
+				DataInputStream inStream = new DataInputStream(socket.getInputStream());
+				
 				peer.inStream = inStream;
 				peer.outStream = outStream;
+				peer.socket = socket;
 
 			}
 			//if we appear second we are a client
@@ -60,13 +64,16 @@ public class PeerProcess implements Runnable{
 				System.out.println("Peer:" + myID + " trying to connect to " + peer.host + " via socket " + config.getMyPortNumber());
 				Socket socket = new Socket(peer.host,config.getMyPortNumber());
 				
-				DataInputStream inStream = new DataInputStream(socket.getInputStream());
 				DataOutputStream outStream = new DataOutputStream(socket.getOutputStream());
+				outStream.flush();
+				DataInputStream inStream = new DataInputStream(socket.getInputStream());
+				
 				peer.inStream = inStream;
 				peer.outStream = outStream;
+				peer.socket = socket;
 
 				//create input and output data streams, and save them in the peer
-				Message shake = new Message();
+				Message shake = new Message(config.getPieceSize());
 				shake.sendHandShake(peer);
 				peer.sentHandShake = true;
 				System.out.println("Peer:" + myID + " sent handshake to Peer:" + peer.peerID);
@@ -74,10 +81,7 @@ public class PeerProcess implements Runnable{
 		}
 	}
 
-	public void handleMessage(PeerRecord peer, Message gotMessage) throws Exception {
-		int interestStatus = 0;
-		ByteBuffer b;
-
+	public synchronized void handleMessage(PeerRecord peer, Message gotMessage) throws Exception {
 		/* The switch statement does work for this but I think there could be a better way to organize this
 		perhaps each case has a function */
 		switch (gotMessage.getType()) {
@@ -112,7 +116,11 @@ public class PeerProcess implements Runnable{
 			case Message.PIECE:
 				handlePiece(peer,gotMessage);
 				break;
-
+				
+			case Message.HAVE:
+				handleHave(peer,gotMessage);
+				break;
+				
 			default:
 				break;
 		}
@@ -122,13 +130,12 @@ public class PeerProcess implements Runnable{
 		System.out.println("Peer:" + myID + " got handshake from Peer:" + peer.peerID);
 		if(peer.sentHandShake) {
 			System.out.println("Peer:" + myID + " sending bitfield to Peer:" + peer.peerID);
-			Message sendBitField = new Message(); //create message for sending bitfield
-			sendBitField.setType(Message.BITFIELD); //set message type to bitfield
-			sendBitField.setPayLoad(myBitField.toBytes()); //set the payload bitfield bytes
-			sendBitField.sendMessage(peer); //send bitfield
+			gotMessage.clear();
+			gotMessage.sendBitField(peer,myBitField);
 		}
 		else {
 			System.out.println("Peer:" + myID + " sending handshake 2 to Peer:" + peer.peerID);
+			gotMessage.clear();
 			gotMessage.sendHandShake(peer);
 		}
 	}
@@ -136,47 +143,44 @@ public class PeerProcess implements Runnable{
 	public void handleBitfield(PeerRecord peer, Message gotMessage) throws Exception {
 		peer.bitField.setBitField(gotMessage.getPayLoad()); //update the bitfield to match
 		System.out.println("Peer:" + peer.peerID + " bitfield is " + peer.bitField.getText());
+		
 		if(!peer.sentHandShake) {
 			System.out.println("Peer:" + myID + " sending bitfield to Peer:" + peer.peerID);
-			Message sendBitField = new Message(); //create message for sending bitfield
-			sendBitField.setType(Message.BITFIELD); //set message type to bitfield
-			sendBitField.setPayLoad(myBitField.toBytes()); //set the payload bitfield bytes
-			sendBitField.sendMessage(peer); //send bitfield
+			gotMessage.clear();
+			gotMessage.sendBitField(peer,myBitField);
 		}
 		else {
 			int interestingIndex = myBitField.getInterestingIndex(peer.bitField); //get interesting index compared to my bitfield
-			Message interest = new Message(); //create message for interest
+			gotMessage.clear();
 			if (interestingIndex != -1) {
 				System.out.println("Peer:" + myID + " is interested in Peer:" + peer.peerID);
 				
 				peer.isInterested = true;	//set peer to be interested
-				interestedList.put(peer.peerID,peer);	//add to interestedList
+				//interestedList.put(peer.peerID,peer);	//add to interestedList
 
-				interest.setType(Message.INTERESTED); //if interested set type to interested
+				gotMessage.sendInterested(peer);
 			}
 			else {
 				System.out.println("Peer:" + myID + " is not interested in Peer:" + peer.peerID);
 
 				peer.isInterested = false; //set peer to be not interested
-				interestedList.remove(peer.peerID);
+				//interestedList.remove(peer.peerID);
 
-				interest.setType(Message.NOTINTERESTED); //set type to uninterested
+				gotMessage.sendNotInterested(peer);
 			}
-			interest.sendMessage(peer); //send message
 		}
 	}
 
 	public void handleUnchoke(PeerRecord peer, Message gotMessage) throws Exception {
-		int pieceIndex = myBitField.getInterestingIndex(peer.bitField); //get a pieceIndex I need
-		ByteBuffer b = ByteBuffer.allocate(4); //setup byte buffer for payload
-		byte[] msg = b.putInt(pieceIndex).array(); //put pieceIndex in byte[]
+		int pieceIndex = myBitField.getRandomNeededIndex(peer.bitField); //get a pieceIndex I need
+		
+		if(pieceIndex != -1) {
 
-		Message requestMsg = new Message(); //create message object
-		requestMsg.setType(Message.REQUEST); //set message type to REQUEST
-		requestMsg.setPayLoad(msg); //set payload to byte[] of pieceIndex
-		requestMsg.sendMessage(peer); //send the message
+			gotMessage.clear();
+			gotMessage.sendRequest(peer,pieceIndex);
 
-		System.out.println("Peer:" + myID + " sent request for piece " + pieceIndex + " to Peer:" + peer.peerID);
+			System.out.println("Peer:" + myID + " sent request for piece " + pieceIndex + " to Peer:" + peer.peerID);
+		}
 	}
 
 	public void handleRequest(PeerRecord peer, Message gotMessage) throws Exception {
@@ -187,8 +191,8 @@ public class PeerProcess implements Runnable{
 			System.out.println("Peer:" + myID + " received request for piece " + pieceIndex + " from Peer:" + peer.peerID);
 			
 			Pieces piece = myFileManager.getPiece(pieceIndex); //get the piece at the index
-			Message pieceMsg = new Message();
-			pieceMsg.sendPiece(peer, piece);
+			gotMessage.clear();
+			gotMessage.sendPiece(peer, piece);
 
 			System.out.println("Peer:" + myID + " sent piece " + pieceIndex + " to Peer:" + peer.peerID);
 		}
@@ -200,16 +204,48 @@ public class PeerProcess implements Runnable{
 	public void handlePiece(PeerRecord peer, Message gotMessage) throws Exception {
 		byte[] payload = gotMessage.getPayLoad(); //create byte array for the message payload
 				
-		ByteBuffer b = ByteBuffer.wrap(payload);
-		int pieceIndex = b.getInt(0);
-		byte[] pieceBytes = new byte[payload.length - 4];
-		System.arraycopy(payload,4,pieceBytes,0,payload.length-4);	
-		Pieces piece = new Pieces(pieceIndex,pieceBytes);
+		ByteBuffer b = ByteBuffer.wrap(payload); //create bytebuffer for payload
+		int pieceIndex = b.getInt(0); //get the pieceIndex
+		byte[] pieceBytes = new byte[payload.length - 4]; //create array for the actual pieceBytes
+		System.arraycopy(payload,4,pieceBytes,0,payload.length-4); //copy the piece stuff into the pieceBytes
+		Pieces piece = new Pieces(pieceIndex,pieceBytes); //create piece from the payload information
 
-		myFileManager.putPiece(piece);
-		myBitField.turnOnBit(pieceIndex);
+		System.out.println("Peer:" + myID + " received and downloaded piece " + pieceIndex + " from Peer:" + peer.peerID);
 
-		peer.piecesSinceLastRound++;
+		myFileManager.putPiece(piece); //place piece in file
+		myBitField.turnOnBit(pieceIndex); //update my bitfield to reflect new piece
+
+		List<PeerRecord> peerList = new ArrayList<PeerRecord>(peerMap.values());
+		for(PeerRecord entry : peerList) {
+			gotMessage.clear();
+			gotMessage.sendHave(entry, pieceIndex);
+		}
+		
+		
+		if(myBitField.isFinished()) {
+			System.out.println("Peer:" + myID + " is finished");
+			waitToExit();
+		}
+		else {
+			int newPieceIndex = myBitField.getRandomNeededIndex(peer.bitField);	
+			b = ByteBuffer.allocate(4); //setup byte buffer for payload
+			byte[] msg = b.putInt(newPieceIndex).array(); //put pieceIndex in byte[]
+			Message requestMsg = new Message(config.getPieceSize());
+			requestMsg.setType(Message.REQUEST);
+			requestMsg.setPayLoad(msg);
+			requestMsg.sendMessage(peer);
+			
+			System.out.println("Peer:" + myID + " sent request for piece " + newPieceIndex + " to Peer:" + peer.peerID);		
+		}
+		peer.piecesSinceLastRound++; //updated how many pieces i got from last unchoking round	
+	}
+	
+	public void handleHave(PeerRecord peer, Message gotMessage) {
+		byte[] payload = gotMessage.getPayLoad(); //create byte array for the message payload
+		ByteBuffer b = ByteBuffer.wrap(payload); //create bytebuffer for payload
+		int pieceIndex = b.getInt(0); //get the pieceIndex
+		
+		peer.bitField.turnOnBit(pieceIndex);
 	}
 
 	public void unchokingUpdate() throws Exception {
@@ -237,9 +273,9 @@ public class PeerProcess implements Runnable{
 			//send unchoke for the first numberofprefferedneighbors peers
 			for(int i = 0; i<config.getNumberPreferredNeighbors(); i++) {
 				if(sortedPeers.get(i).isChoked) {
-					neighborList.put(sortedPeers.get(i).peerID,sortedPeers.get(i)); //add to neighbor list
+					//neighborList.put(sortedPeers.get(i).peerID,sortedPeers.get(i)); //add to neighbor list
 
-					Message unchokeMsg = new Message(); //create message object 
+					Message unchokeMsg = new Message(config.getPieceSize()); //create message object 
 					unchokeMsg.setType(Message.UNCHOKE); //set message to UNCHOKE type
 					unchokeMsg.sendMessage(sortedPeers.get(i)); //send message
 
@@ -255,10 +291,10 @@ public class PeerProcess implements Runnable{
 			//send choke to the rest of the peers
 			for(int i = config.getNumberPreferredNeighbors(); i < sortedPeers.size(); i++) {
 				if(!sortedPeers.get(i).isChoked && !sortedPeers.get(i).isOptimisticallyUnchoked) {
-					neighborList.remove(sortedPeers.get(i).peerID); //remove from neighbor list
+					//neighborList.remove(sortedPeers.get(i).peerID); //remove from neighbor list
 					sortedPeers.get(i).isInterested = false; //set isinterested to false
 
-					Message chokeMsg = new Message(); //create message object
+					Message chokeMsg = new Message(config.getPieceSize()); //create message object
 					chokeMsg.setType(Message.CHOKE); //set message type to choke
 					chokeMsg.sendMessage(sortedPeers.get(i));
 
@@ -284,9 +320,9 @@ public class PeerProcess implements Runnable{
 		
 		for (int i = 0; i < peers.size(); i++) {
 			if(peers.get(i).isChoked && peers.get(i).isInterested) {
-				neighborList.put(peers.get(i).peerID,peers.get(i)); //add to neighbor list
+				//neighborList.put(peers.get(i).peerID,peers.get(i)); //add to neighbor list
 
-				Message unchokeMsg = new Message(); //create message object 
+				Message unchokeMsg = new Message(config.getPieceSize()); //create message object 
 				unchokeMsg.setType(Message.UNCHOKE); //set message to UNCHOKE type
 				unchokeMsg.sendMessage(peers.get(i)); //send message
 				
@@ -308,6 +344,7 @@ public class PeerProcess implements Runnable{
 			}
 		}
 		if(finished) {
+			System.out.println("All peers are finished. Exiting program");
 			System.exit(0);
 		}
 	}
@@ -325,9 +362,14 @@ public class PeerProcess implements Runnable{
 			while(true){
 				for(PeerRecord peer: peerList) {
 					if(peer.inStream.available() >= 5) {
-						Message gotMessage = new Message(); //create message object for received message
+						Message gotMessage = new Message(config.getPieceSize()); //create message object for received message
 						gotMessage.readMessage(peer,myID); //read message
-						handleMessage(peer,gotMessage);  //handle the message
+						//if(gotMessage.getLength() <= (config.getPieceSize() + 5) && gotMessage.getLength() >= 0) {
+							handleMessage(peer,gotMessage);  //handle the message
+						//}
+						//else {
+							//System.out.println("Peer:" + myID + " received something weird from Peer:" + peer.peerID);
+						//}
 					}
 				}
 

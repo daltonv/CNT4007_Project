@@ -1,3 +1,5 @@
+import java.util.Random;
+
 public class BitField {
 	
 	private boolean finished;
@@ -92,6 +94,27 @@ public class BitField {
 			} 
 		}
 		return index;
+	}
+
+	public int getRandomNeededIndex(BitField b) {
+		int[] indexList = new int[piecesCount];
+		int j = 0;
+		for (int i = 0; i < piecesCount; i++) {
+			if ((bitField[i] == false) && b.bitField[i] == true) {
+				indexList[j] = i;
+				j++; 
+			} 
+		}
+		System.out.println("Number of uncommon stuff " + j);
+		Random rand = new Random();
+		int randIndex = rand.nextInt(j+1); 
+
+		if (j!=0) {
+			return indexList[randIndex];
+		}
+		else {
+			return -1;
+		}
 	}
 
 	public String getText() {

@@ -20,14 +20,16 @@ public class Message{
 	private int length;
 	private int ID;
 	private byte[] payload;
+	private int pieceSize;
 
-	public Message(){
+	public Message(int pieceSize){
 		type = 0;
 		length = 0;
 		payload = null;
+		this.pieceSize = pieceSize;
 	}
 
-	public void readMessage(PeerRecord peer, int myID) throws IOException {
+	public synchronized void readMessage(PeerRecord peer, int myID) throws IOException {
 		byte[] temp = new byte[5];
 		peer.inStream.read(temp,0,5);
 
@@ -44,11 +46,12 @@ public class Message{
 				payload = new byte[this.length - 1];
 				peer.inStream.read(this.payload,0,this.length-1);
 			}
+			
 			System.out.println("Peer:" + myID + " got message of type " + this.type + " and length " + this.length + " from Peer:" + peer.peerID);
 		}
 	}
 
-	public void sendMessage(PeerRecord peer) throws IOException {
+	public synchronized void sendMessage(PeerRecord peer) throws IOException {
 		if(payload == null){
 			length = 1; //set length to 4 if no payload
 		}
@@ -60,24 +63,73 @@ public class Message{
 		ByteBuffer b = ByteBuffer.wrap(msg);
 		b.putInt(length);
 		msg[4] = (byte)type;
-
-		peer.outStream.write(msg,0,msg.length);
-		if(payload != null){
-			peer.outStream.write(payload,0,payload.length);
+		
+		try {
+			peer.outStream.write(msg,0,msg.length);
+			if(payload != null){
+				peer.outStream.write(payload,0,payload.length);
+			}
+			
+			
+		}
+		catch(IOException ex) {
+			System.out.println(ex.toString());
 		}
 		peer.outStream.flush();
 	}
 
 	/*This function handles sending pieces since their payloads need some special configuration */
-	public void sendPiece(PeerRecord peer, Pieces piece) throws IOException {
+	public synchronized void sendPiece(PeerRecord peer, Pieces piece) throws IOException {
 		byte[] msg = new byte[piece.getPieceBytes().length + 4]; //create byte array for payload
 		ByteBuffer b = ByteBuffer.wrap(msg); //create byte buffer for payload
-		b.putInt(piece.getPieceIndex()); //put pieceIndex in the the first 4 bytes of the payload
+		byte[] index = b.putInt(piece.getPieceIndex()).array(); //put pieceIndex in the the first 4 bytes of the payload
+		//System.out.println("Are you sure " + piece.getPieceIndex());
+		System.arraycopy(index,0,msg,0,index.length);
 		System.arraycopy(piece.getPieceBytes(),0,msg,4,piece.getPieceBytes().length); //copy the piece byte array to the payload array 
 		
 		this.type = Message.PIECE; //set type to piece
 		this.payload = msg; //set the payload to msg
-		sendMessage(peer); //send the message
+		this.sendMessage(peer); //send the message
+	}
+
+	public synchronized void sendBitField(PeerRecord peer, BitField bitfield) throws IOException {
+		this.type = Message.BITFIELD; //set message type to bitfield
+		this.payload = bitfield.toBytes(); //set the payload bitfield bytes
+		sendMessage(peer); //send bitfield
+	}
+
+	public synchronized void sendInterested(PeerRecord peer) throws IOException {
+		this.type = Message.INTERESTED;
+		sendMessage(peer);
+	}
+
+	public synchronized void sendNotInterested(PeerRecord peer) throws IOException {
+		this.type = Message.NOTINTERESTED;
+		sendMessage(peer);
+	}
+
+	public synchronized void sendRequest(PeerRecord peer, int pieceIndex) throws IOException {
+		this.type = Message.REQUEST;
+		
+		ByteBuffer b = ByteBuffer.allocate(4); //setup byte buffer for payload
+		this.payload = b.putInt(pieceIndex).array(); //put pieceIndex in byte[]
+
+		sendMessage(peer);
+	}
+
+	public synchronized void sendHave(PeerRecord peer, int pieceIndex) throws IOException {
+		this.type = Message.HAVE;
+		
+		ByteBuffer b = ByteBuffer.allocate(4); //setup byte buffer for payload
+		this.payload = b.putInt(pieceIndex).array(); //put pieceIndex in byte[]
+
+		sendMessage(peer);
+	}
+
+	public void clear() {
+		this.type = 0;
+		this.payload = null;
+		this.length = 0;
 	}
 
 	public void sendHandShake(PeerRecord peer) throws IOException {
@@ -123,5 +175,9 @@ public class Message{
 
 	public int getID(){
 		return ID;
+	}
+	
+	public int getLength() {
+		return length;
 	}
 }

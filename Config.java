@@ -41,6 +41,8 @@ public class Config {
 		if(this.fileSize%this.pieceSize != 0) {
 			this.pieceCount++;
 		}
+		
+		in1.close();
 
 		//read peer config --------------------------------------------
 		Scanner in2= new Scanner(new FileReader(peerInfo));
@@ -87,7 +89,9 @@ public class Config {
 		//make sure the number of preffered neighbors is at max the neighborCount
 		if (this.peerCount - 1 < this.numberPreferredNeighbors) {
 			this.numberPreferredNeighbors = this.peerCount - 1;
-		} 
+		}
+		
+		in2.close();
 	}
 
 	public int getFileSize() {
