@@ -4,3 +4,4 @@
 logTest.class
 log_peer_*.log
 *.class
+peer_*/*
