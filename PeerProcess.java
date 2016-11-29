@@ -99,12 +99,12 @@ public class PeerProcess implements Runnable{
 						break;
 		
 					case Message.INTERESTED:
-						peer.isInterested = true;
+						peer.isInterested = true; //update my record of the peer saying it's interested in my
 						myLogger.logReceiveInterested(peer.peerID); //log the received interested message
 						break;
 		
 					case Message.NOTINTERESTED:
-						peer.isInterested = false;
+						peer.isInterested = false; //update my record of the peer saying it's not interested in me
 						myLogger.logNotInterested(peer.peerID); //log the received notinterested message
 						break;
 		
@@ -164,7 +164,7 @@ public class PeerProcess implements Runnable{
 			if (interestingIndex != -1) {
 				System.out.println("Peer:" + myID + " is interested in Peer:" + peer.peerID);
 				
-				peer.isInterested = true;	//set peer to be interested
+				//peer.isInterested = true;	//set peer to be interested
 				//interestedList.put(peer.peerID,peer);	//add to interestedList
 
 				gotMessage.sendInterested(peer);
@@ -172,7 +172,7 @@ public class PeerProcess implements Runnable{
 			else {
 				System.out.println("Peer:" + myID + " is not interested in Peer:" + peer.peerID);
 
-				peer.isInterested = false; //set peer to be not interested
+				//peer.isInterested = false; //set peer to be not interested
 				//interestedList.remove(peer.peerID);
 
 				gotMessage.sendNotInterested(peer);
@@ -262,6 +262,17 @@ public class PeerProcess implements Runnable{
 		myLogger.logReceiveHave(peer.peerID,pieceIndex); //log receiving the have message
 		
 		peer.bitField.turnOnBit(pieceIndex); //update this peer's bitfield in my records
+
+		int interest = myBitField.getInterestingIndex(peer.bitField);
+		if(interest == -1) {
+			gotMessage.clear();
+			gotMessage.sendNotInterested(peer); //send a not interested message
+		}
+		else {
+			gotMessage.clear();
+			gotMessage.sendInterested();
+		}
+
 	}
 
 	public void unchokingUpdate() throws Exception {
@@ -286,7 +297,7 @@ public class PeerProcess implements Runnable{
 			}
 		}
 		if(sortedPeers.size()>0){
-			//send unchoke for the first numberofprefferedneighbors peers
+			//send unchoke for the first number of prefferedneighbors peers
 			for(int i = 0; i<config.getNumberPreferredNeighbors(); i++) {
 				if(sortedPeers.get(i).isChoked) {
 					//neighborList.put(sortedPeers.get(i).peerID,sortedPeers.get(i)); //add to neighbor list
@@ -308,7 +319,7 @@ public class PeerProcess implements Runnable{
 			for(int i = config.getNumberPreferredNeighbors(); i < sortedPeers.size(); i++) {
 				if(!sortedPeers.get(i).isChoked && !sortedPeers.get(i).isOptimisticallyUnchoked) {
 					//neighborList.remove(sortedPeers.get(i).peerID); //remove from neighbor list
-					sortedPeers.get(i).isInterested = false; //set isinterested to false
+					//sortedPeers.get(i).isInterested = false; //set isinterested to false
 
 					Message chokeMsg = new Message(config.getPieceSize()); //create message object
 					chokeMsg.setType(Message.CHOKE); //set message type to choke
