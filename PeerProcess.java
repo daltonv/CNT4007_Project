@@ -254,7 +254,7 @@ public class PeerProcess implements Runnable{
 		peer.piecesSinceLastRound++; //updated how many pieces i got from last unchoking round	
 	}
 	
-	public void handleHave(PeerRecord peer, Message gotMessage) {
+	public void handleHave(PeerRecord peer, Message gotMessage) throws IOException {
 		byte[] payload = gotMessage.getPayLoad(); //create byte array for the message payload
 		ByteBuffer b = ByteBuffer.wrap(payload); //create bytebuffer for payload
 		int pieceIndex = b.getInt(0); //get the pieceIndex
@@ -270,7 +270,7 @@ public class PeerProcess implements Runnable{
 		}
 		else {
 			gotMessage.clear();
-			gotMessage.sendInterested();
+			gotMessage.sendInterested(peer);
 		}
 
 	}
