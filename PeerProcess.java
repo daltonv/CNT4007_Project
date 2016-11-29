@@ -164,16 +164,14 @@ public class PeerProcess implements Runnable{
 			if (interestingIndex != -1) {
 				System.out.println("Peer:" + myID + " is interested in Peer:" + peer.peerID);
 				
-				//peer.isInterested = true;	//set peer to be interested
-				//interestedList.put(peer.peerID,peer);	//add to interestedList
+				peer.interestedIn = true; //update my record of the peer to show my interest
 
 				gotMessage.sendInterested(peer);
 			}
 			else {
 				System.out.println("Peer:" + myID + " is not interested in Peer:" + peer.peerID);
 
-				//peer.isInterested = false; //set peer to be not interested
-				//interestedList.remove(peer.peerID);
+				peer.interestedIn = false; //update my record of the peer to show my disinterest
 
 				gotMessage.sendNotInterested(peer);
 			}
@@ -264,12 +262,15 @@ public class PeerProcess implements Runnable{
 		peer.bitField.turnOnBit(pieceIndex); //update this peer's bitfield in my records
 
 		int interest = myBitField.getInterestingIndex(peer.bitField);
-		if(interest == -1) {
-			gotMessage.clear();
+		gotMessage.clear();
+
+		/* only send interested or not interested if something changed */
+		if(interest == -1 && peer.interestedIn) {
+			peer.interestedIn = false; //update my record of the peer to show my disinterest
 			gotMessage.sendNotInterested(peer); //send a not interested message
 		}
-		else {
-			gotMessage.clear();
+		else if (interest > -1 && !peer.interestedIn) {
+			peer.interestedIn = true; //update my record of the peer to show my interest
 			gotMessage.sendInterested(peer);
 		}
 

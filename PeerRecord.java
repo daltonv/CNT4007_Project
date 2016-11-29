@@ -23,6 +23,7 @@ public class PeerRecord {
 	
 	public boolean sentHandShake;
 	public boolean isInterested;
+	public boolean interestedIn;
 	public boolean isChoked;
 	public boolean isOptimisticallyUnchoked;
 	
@@ -36,6 +37,7 @@ public class PeerRecord {
 		this.isInterested = false;
 		this.piecesSinceLastRound = 0;
 		this.isChoked = true;
-		this.isOptimisticallyUnchoked = false;		
+		this.isOptimisticallyUnchoked = false;
+		this.interestedIn = false;		
 	}
 }
