@@ -128,4 +128,8 @@ public class BitField {
 		}
 		return text.toString();
 	}
+
+	public int getPiecesCountDowned() {
+		return piecesCountDowned;
+	}
 }

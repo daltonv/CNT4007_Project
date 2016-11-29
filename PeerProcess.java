@@ -13,6 +13,7 @@ public class PeerProcess implements Runnable{
 	private boolean myHasFile;
 	private BitField myBitField; //my own BitField
 	private FileManager myFileManager;
+	private P2PLogger myLogger;
 
 	private HashMap<Integer, PeerRecord> peerMap;
 
@@ -28,6 +29,7 @@ public class PeerProcess implements Runnable{
 		this.myBitField = config.getMyBitField(); //get my BitField
 		this.myHasFile = config.getMyHasFile();
 		this.myFileManager = config.getMyFileManager();
+		this.myLogger = new P2PLogger(myID,myFileManager.getFileHandler());
 	}
 
 	public void initConnections() throws Exception {
@@ -98,10 +100,12 @@ public class PeerProcess implements Runnable{
 		
 					case Message.INTERESTED:
 						peer.isInterested = true;
+						myLogger.logReceiveInterested(peer.peerID); //log the received interested message
 						break;
 		
 					case Message.NOTINTERESTED:
 						peer.isInterested = false;
+						myLogger.logNotInterested(peer.peerID); //log the received notinterested message
 						break;
 		
 					case Message.CHOKE:
@@ -177,6 +181,8 @@ public class PeerProcess implements Runnable{
 	}
 
 	public void handleUnchoke(PeerRecord peer, Message gotMessage) throws Exception {
+		myLogger.logUnchoking(peer.peerID);
+
 		int pieceIndex = myBitField.getRandomNeededIndex(peer.bitField); //get a pieceIndex I need
 		
 		if(pieceIndex != -1) {
@@ -220,15 +226,18 @@ public class PeerProcess implements Runnable{
 		myFileManager.putPiece(piece); //place piece in file
 		myBitField.turnOnBit(pieceIndex); //update my bitfield to reflect new piece
 
+		myLogger.logPieceDownload(peer.peerID,pieceIndex,myBitField.getPiecesCountDowned()); //log the piece download
+
+		/* Send have message to all my neighbors so they can update their bitfields */
 		List<PeerRecord> peerList = new ArrayList<PeerRecord>(peerMap.values());
 		for(PeerRecord entry : peerList) {
 			gotMessage.clear();
 			gotMessage.sendHave(entry, pieceIndex);
 		}
 		
-		
 		if(myBitField.isFinished()) {
 			System.out.println("Peer:" + myID + " is finished");
+			myLogger.logDownloadComp(); //log that i am finished
 			waitToExit();
 		}
 		else {
@@ -249,8 +258,10 @@ public class PeerProcess implements Runnable{
 		byte[] payload = gotMessage.getPayLoad(); //create byte array for the message payload
 		ByteBuffer b = ByteBuffer.wrap(payload); //create bytebuffer for payload
 		int pieceIndex = b.getInt(0); //get the pieceIndex
+
+		myLogger.logReceiveHave(peer.peerID,pieceIndex); //log receiving the have message
 		
-		peer.bitField.turnOnBit(pieceIndex);
+		peer.bitField.turnOnBit(pieceIndex); //update this peer's bitfield in my records
 	}
 
 	public void unchokingUpdate() throws Exception {

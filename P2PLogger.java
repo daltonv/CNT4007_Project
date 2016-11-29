@@ -16,11 +16,11 @@ public class P2PLogger{
 	private FileHandler fileHandler;
 	private SimpleFormatter formatter;
 
-	public P2PLogger(int peerID) throws IOException {
+	public P2PLogger(int peerID, FileHandler fileHandler) throws IOException {
 		this.peerID = peerID;
 		logger = Logger.getLogger("Peer" + this.peerID);
 		logger.setLevel(Level.INFO);
-		fileHandler = new FileHandler("log_peer_" + peerID + ".log");
+		this.fileHandler = fileHandler;
 		formatter = new SimpleFormatter();
 		fileHandler.setFormatter(formatter);
 		logger.addHandler(fileHandler);

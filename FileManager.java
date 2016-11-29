@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.*;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.logging.*;
 
 public class FileManager {
 	private File f;
@@ -10,8 +10,9 @@ public class FileManager {
 	private int numberOfPieces;
 	private int pieceSize;
 	private int fileSize;
+	private FileHandler fileHandler;
 
-	public FileManager(int numberOfPieces, int pieceSize, int fileSize, String fileName, int peerID, boolean hasFile) throws FileNotFoundException {
+	public FileManager(int numberOfPieces, int pieceSize, int fileSize, String fileName, int peerID, boolean hasFile) throws FileNotFoundException, IOException {
 		String directory = "peer_" + peerID + "/";
 		File dir = new File(directory);
 		if(!dir.exists()) {
@@ -29,6 +30,8 @@ public class FileManager {
 		this.numberOfPieces = numberOfPieces;
 		this.pieceSize = pieceSize;
 		this.fileSize = fileSize;
+
+		fileHandler = new FileHandler(directory + "log_peer_" + peerID + ".log");
 	}
 
 	public Pieces getPiece(int index) throws IOException {
@@ -61,5 +64,9 @@ public class FileManager {
 		for(int i = 0; i < length; i++) {
 			file.writeByte(bytes[i]); //write to the file's bytes
 		}
+	}
+
+	public FileHandler getFileHandler() {
+		return fileHandler;
 	}
 }
