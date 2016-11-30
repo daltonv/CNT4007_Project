@@ -1,6 +1,6 @@
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -26,7 +26,7 @@ public class Config {
 
 	private int peerCount;
 
-	public Config(String commonInfo, String peerInfo, int myID) throws FileNotFoundException {
+	public Config(String commonInfo, String peerInfo, int myID) throws IOException {
 		//read common config ----------------------------------------
 		Scanner in1= new Scanner(new FileReader(commonInfo));
 		this.numberPreferredNeighbors = Integer.parseInt(in1.nextLine().trim());
