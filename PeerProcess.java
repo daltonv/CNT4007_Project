@@ -361,7 +361,7 @@ public class PeerProcess implements Runnable{
 		}
 	}
 
-	public void waitToExit() {
+	public void waitToExit() throws IOException {
 		//System.out.println("Peer:" + myID + " has the file and is now waiting for all peers to finish");
 		boolean finished = true;
 
@@ -373,6 +373,9 @@ public class PeerProcess implements Runnable{
 		}
 		if(finished) {
 			System.out.println("All peers are finished. Exiting program");
+			for(PeerRecord peer: peerList) {
+				peer.socket.close();
+			}
 			System.exit(0);
 		}
 	}
