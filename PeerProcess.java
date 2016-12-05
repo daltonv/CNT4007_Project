@@ -8,26 +8,17 @@ import java.util.concurrent.*;
 public class PeerProcess implements Runnable{
 	private Config config; //my configuration info
 	private int myID; //myID
-	private int myPortNumber;
-	private String myHost;
-	private boolean myHasFile;
 	private BitField myBitField; //my own BitField
 	private FileManager myFileManager;
 	private P2PLogger myLogger;
 
 	private HashMap<Integer, PeerRecord> peerMap;
 
-	//private HashMap<Integer, PeerRecord> interestedList = new HashMap<Integer ,PeerRecord>(); //list of peers with interesting pieces
-	//private HashMap<Integer, PeerRecord> interestingList = new HashMap<Integer, PeerRecord>(); //list of peers interested in my pieces
-	//private HashMap<Integer, PeerRecord> senderList = new HashMap<Integer, PeerRecord>(); //list of peers sending me pieces
-	//private HashMap<Integer, PeerRecord> neighborList = new HashMap<Integer, PeerRecord>(); //list of peers I am sending data to
-
 	public PeerProcess(int myID) throws UnknownHostException, IOException {
 		this.myID = myID;
 		this.config = new Config("common.cfg", "peerinfo.cfg", myID); //read config files
 		this.peerMap = config.getPeerMap(); //get the peer map
 		this.myBitField = config.getMyBitField(); //get my BitField
-		this.myHasFile = config.getMyHasFile();
 		this.myFileManager = config.getMyFileManager();
 		this.myLogger = new P2PLogger(myID,myFileManager.getFileHandler());
 	}
@@ -109,7 +100,7 @@ public class PeerProcess implements Runnable{
 						break;
 		
 					case Message.CHOKE:
-						//remove sender
+						myLogger.logChoking(peer.peerID); //log the received notinterested message
 						break;
 					
 					case Message.UNCHOKE:
@@ -139,11 +130,13 @@ public class PeerProcess implements Runnable{
 		System.out.println("Peer:" + myID + " got handshake from Peer:" + peer.peerID);
 		if(peer.sentHandShake) {
 			System.out.println("Peer:" + myID + " sending bitfield to Peer:" + peer.peerID);
+			myLogger.logTCPConnTo(peer.peerID);
 			gotMessage.clear();
 			gotMessage.sendBitField(peer,myBitField);
 		}
 		else {
 			System.out.println("Peer:" + myID + " sending handshake 2 to Peer:" + peer.peerID);
+			myLogger.logTCPConnFrom(peer.peerID);
 			gotMessage.clear();
 			gotMessage.sendHandShake(peer);
 		}
@@ -277,7 +270,7 @@ public class PeerProcess implements Runnable{
 	}
 
 	public void unchokingUpdate() throws Exception {
-		if(myHasFile) {
+		if(myBitField.isFinished()) {
 			waitToExit();
 		}
 
@@ -336,7 +329,7 @@ public class PeerProcess implements Runnable{
 	}
 
 	public void optomisticUnchokingUpdate() throws Exception {
-		if(myHasFile) {
+		if(myBitField.isFinished()) {
 			waitToExit();
 		}
 
@@ -354,9 +347,9 @@ public class PeerProcess implements Runnable{
 				unchokeMsg.setType(Message.UNCHOKE); //set message to UNCHOKE type
 				unchokeMsg.sendMessage(peers.get(i)); //send message
 				
-				System.out.println("Peer:" + myID + " sending unchoke message to Peer:" + peers.get(i).peerID);	
-
+				//System.out.println("Peer:" + myID + " sending unchoke message to Peer:" + peers.get(i).peerID);	
 				peers.get(i).isOptimisticallyUnchoked = true;
+				myLogger.logChangeOpt(peers.get(i).peerID); //log the change of optimistic neighbor
 			}
 		}
 	}
