@@ -290,6 +290,8 @@ public class PeerProcess implements Runnable{
 				sortedPeers.remove(i);
 			}
 		}
+		
+		ArrayList<Integer> prefNeighbors = new ArrayList<Integer>();
 		if(sortedPeers.size()>0){
 			//send unchoke for the first number of prefferedneighbors peers
 			for(int i = 0; i<config.getNumberPreferredNeighbors(); i++) {
@@ -302,12 +304,15 @@ public class PeerProcess implements Runnable{
 
 					sortedPeers.get(i).isChoked = false; //update peer to be unchoked
 
-					System.out.println("Peer:" + myID + " sending unchoke message to Peer:" + sortedPeers.get(i).peerID);
+					//System.out.println("Peer:" + myID + " sending unchoke message to Peer:" + sortedPeers.get(i).peerID);
 				}
 				if(sortedPeers.get(i).isOptimisticallyUnchoked) {
 					sortedPeers.get(i).isOptimisticallyUnchoked = false;
 				}
+				sortedPeers.get(i).piecesSinceLastRound = 0;
+				prefNeighbors.add(sortedPeers.get(i).peerID);	
 			}
+			myLogger.changePrefLog(prefNeighbors);
 
 			//send choke to the rest of the peers
 			for(int i = config.getNumberPreferredNeighbors(); i < sortedPeers.size(); i++) {
@@ -323,6 +328,7 @@ public class PeerProcess implements Runnable{
 
 					sortedPeers.get(i).isChoked = true;
 				}
+				sortedPeers.get(i).piecesSinceLastRound = 0;
 			}
 		}
 

@@ -1,6 +1,7 @@
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.logging.*;
 
@@ -39,11 +40,21 @@ public class P2PLogger{
 		logger.info(": Peer " + this.peerID + " is connected from Peer " + peerID + ".\n");
 	}
 	
-	/* ---- TO BE IMPLEMENTED ------
-	//Log change of pregerred neighbors
-	public void logChangePrefNeighbors(PeerRecord[] neighbors){
+	public void changePrefLog(ArrayList<Integer> prefNeighbors) {
+			
+			StringBuffer s = new StringBuffer();
+			s.append(":Peer " + this.peerID + " has the preferred neighbores ");
+			
+			for (int i = 0; i < prefNeighbors.size(); i++) {
+				if (i != (prefNeighbors.size() - 1)) {
+					s.append(prefNeighbors.get(i) + ", ");
+				} else {
+					s.append(prefNeighbors.get(i) + "\n");
+				}
+			}
+			
+			logger.info(s.toString());
 	}
-	*/
 
 	//Log change of optimistically unchoked neighbor
 	public void logChangeOpt(int peerID){
