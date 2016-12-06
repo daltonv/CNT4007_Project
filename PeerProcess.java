@@ -67,7 +67,7 @@ public class PeerProcess implements Runnable{
 
 				//create input and output data streams, and save them in the peer
 				Message shake = new Message(config.getPieceSize());
-				shake.sendHandShake(peer);
+				shake.sendHandShake(peer, myID);
 				peer.sentHandShake = true;
 				System.out.println("Peer:" + myID + " sent handshake to Peer:" + peer.peerID);
 			}
@@ -138,7 +138,7 @@ public class PeerProcess implements Runnable{
 			System.out.println("Peer:" + myID + " sending handshake 2 to Peer:" + peer.peerID);
 			myLogger.logTCPConnFrom(peer.peerID);
 			gotMessage.clear();
-			gotMessage.sendHandShake(peer);
+			gotMessage.sendHandShake(peer, myID);
 		}
 	}
 

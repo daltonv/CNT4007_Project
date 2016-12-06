@@ -46,6 +46,16 @@ public class Message{
 				bytesRcvd = peer.inStream.read(garbage,totalBytesRcvd,27 - totalBytesRcvd);
 				totalBytesRcvd += bytesRcvd;
 			}
+			
+			byte[] id_array = {garbage[23], garbage[24], garbage[25], garbage[26]};
+			String s_id = new String(id_array);
+			int id = Integer.parseInt(s_id);
+		    
+		    if(id != peer.peerID) {
+		    	System.out.println("Error handshaking. Exiting");
+		    	System.exit(0);
+		    }
+			
 			this.type = HANDSHAKE;
 		}
 		else {
@@ -146,14 +156,14 @@ public class Message{
 		this.length = 0;
 	}
 
-	public void sendHandShake(PeerRecord peer) throws IOException {
+	public void sendHandShake(PeerRecord peer, int myID) throws IOException {
 		
 		try {
 			byte[] handshake = new byte[32];
 			
 			String header = "P2PFILESHARINGPROJ";
 			String zerobits = "0000000000";
-			String id = String.valueOf(peer.peerID);
+			String id = String.valueOf(myID);
 			while(id.length() != 4){
 				id = "0" + id;
 			}
