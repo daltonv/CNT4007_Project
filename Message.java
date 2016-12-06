@@ -52,7 +52,7 @@ public class Message{
 			int id = Integer.parseInt(s_id);
 		    
 		    if(id != peer.peerID) {
-		    	System.out.println("Error handshaking. Exiting");
+		    	System.out.println("Error handshaking. Got Peer:" + id + " but need Peer:" + peer.peerID);
 		    	System.exit(0);
 		    }
 			
