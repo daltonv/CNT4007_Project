@@ -77,7 +77,7 @@ public class Message{
 		int totalBytesRcvd = 0;
 		
 		while(totalBytesRcvd < 28) {
-			bytesRcvd = inStream.read(temp,totalBytesRcvd,5 - totalBytesRcvd);
+			bytesRcvd = inStream.read(temp,totalBytesRcvd,28 - totalBytesRcvd);
 			totalBytesRcvd += bytesRcvd;
 		}
 		String s_head = new String(temp);
@@ -86,7 +86,7 @@ public class Message{
 			byte[] idBytes = new byte[4];
 			totalBytesRcvd = 0;
 			while(totalBytesRcvd < 4) {
-				bytesRcvd = inStream.read(idBytes,totalBytesRcvd,5 - totalBytesRcvd);
+				bytesRcvd = inStream.read(idBytes,totalBytesRcvd,4 - totalBytesRcvd);
 				totalBytesRcvd += bytesRcvd;
 			}
 			

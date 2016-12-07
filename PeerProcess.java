@@ -37,7 +37,7 @@ public class PeerProcess implements Runnable{
 			//if we appear first we are a server
 			if(myID < peer.peerID) {
 				System.out.println("Peer:" + myID + " listening for hostname " + peer.host + " via socket " + config.getMyPortNumber());
-				ServerSocket serv = new ServerSocket(config.getMyPortNumber(),0,InetAddress.getByName(peer.host)); //create server socket
+				ServerSocket serv = new ServerSocket(config.getMyPortNumber()); //create server socket
 				Socket socket = serv.accept();	//now listen for requests
 				serv.close(); //close the server socket now that it is not needed
 				System.out.println("Peer:" + myID + " heard news from " + socket.getInetAddress().toString());
@@ -47,13 +47,14 @@ public class PeerProcess implements Runnable{
 				outStream.flush();
 				DataInputStream inStream = new DataInputStream(socket.getInputStream());
 				
-				Message shake = new Message(config.getPieceSize());
-				shake.readHandShake(inStream);
-				PeerRecord cPeer = peerMap.get(shake.getID());
+				Message shake1 = new Message(config.getPieceSize());
+				shake1.readHandShake(inStream);
 				
-				cPeer.inStream = inStream;
-				cPeer.outStream = outStream;
-				cPeer.socket = socket;
+				peerMap.get(shake1.getID()).inStream = inStream;
+				peerMap.get(shake1.getID()).outStream = outStream;
+				peerMap.get(shake1.getID()).socket = socket;
+				
+				handleHandshake(peerMap.get(shake1.getID()),shake1);
 			}
 			//if we appear second we are a client
 			else if(myID > peer.peerID) {
@@ -132,6 +133,11 @@ public class PeerProcess implements Runnable{
 	public void handleHandshake(PeerRecord peer, Message gotMessage) throws Exception {
 		System.out.println("Peer:" + myID + " got handshake from Peer:" + peer.peerID);
 		if(peer.sentHandShake) {
+			if(gotMessage.getID() != peer.peerID) {
+				System.out.println("Error handshaking. Exiting");
+				System.exit(0);	
+			}
+			
 			System.out.println("Peer:" + myID + " sending bitfield to Peer:" + peer.peerID);
 			myLogger.logTCPConnTo(peer.peerID);
 			gotMessage.clear();
