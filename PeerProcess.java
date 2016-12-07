@@ -286,12 +286,18 @@ public class PeerProcess implements Runnable{
 		System.out.println("Peer:" + myID + " entered unchoking update");
 		List<PeerRecord> sortedPeers = new ArrayList<PeerRecord>(peerMap.values()); //create arrayList of peers
 		
-		//sort peers by piecesSinceLastRound value
-		Collections.sort(sortedPeers, new Comparator<PeerRecord>() {
-			public int compare(PeerRecord peer1, PeerRecord peer2) {
-				return peer1.piecesSinceLastRound - peer2.piecesSinceLastRound;
-			}
-		});
+		if(myBitField.isFinished()) {
+			long seed = System.nanoTime(); //get a seed for random number with nano time;
+			Collections.shuffle(sortedPeers, new Random(seed)); //shuffle peers order randomly
+		}
+		else {
+			//sort peers by piecesSinceLastRound value
+			Collections.sort(sortedPeers, new Comparator<PeerRecord>() {
+				public int compare(PeerRecord peer1, PeerRecord peer2) {
+					return peer1.piecesSinceLastRound - peer2.piecesSinceLastRound;
+				}
+			});
+		}
 
 		//remove any peers that are not interesting
 		for(int i = 0; i < sortedPeers.size(); i++) {
@@ -329,10 +335,10 @@ public class PeerProcess implements Runnable{
 			myLogger.changePrefLog(prefNeighbors);
 
 			//send choke to the rest of the peers
-			for(int i = config.getNumberPreferredNeighbors(); i < sortedPeers.size(); i++) {
+			for(int i = limit; i < sortedPeers.size(); i++) {
 				if(!sortedPeers.get(i).isChoked && !sortedPeers.get(i).isOptimisticallyUnchoked) {
 					//neighborList.remove(sortedPeers.get(i).peerID); //remove from neighbor list
-					//sortedPeers.get(i).isInterested = false; //set isinterested to false
+					//sortedPeers.get(i).isInterested = false; //set is interested to false
 
 					Message chokeMsg = new Message(config.getPieceSize()); //create message object
 					chokeMsg.setType(Message.CHOKE); //set message type to choke
