@@ -36,26 +36,29 @@ public class PeerProcess implements Runnable{
 		for (PeerRecord peer: sortedPeers) {
 			//if we appear first we are a server
 			if(myID < peer.peerID) {
-				System.out.println("Peer:" + myID + " listening for hostname " + peer.host + " via socket " + peer.portNumber);
-				ServerSocket serv = new ServerSocket(peer.portNumber); //create server socket
+				System.out.println("Peer:" + myID + " listening for hostname " + peer.host + " via socket " + config.getMyPortNumber());
+				ServerSocket serv = new ServerSocket(config.getMyPortNumber(),0,InetAddress.getByName(peer.host)); //create server socket
 				Socket socket = serv.accept();	//now listen for requests
 				serv.close(); //close the server socket now that it is not needed
-				System.out.println("Peer:" + myID + " heard news");
+				System.out.println("Peer:" + myID + " heard news from " + socket.getInetAddress().toString());
 
 				//create input and output data streams, and save them in the peer
 				DataOutputStream outStream = new DataOutputStream(socket.getOutputStream());
 				outStream.flush();
 				DataInputStream inStream = new DataInputStream(socket.getInputStream());
 				
-				peer.inStream = inStream;
-				peer.outStream = outStream;
-				peer.socket = socket;
-
+				Message shake = new Message(config.getPieceSize());
+				shake.readHandShake(inStream);
+				PeerRecord cPeer = peerMap.get(shake.getID());
+				
+				cPeer.inStream = inStream;
+				cPeer.outStream = outStream;
+				cPeer.socket = socket;
 			}
 			//if we appear second we are a client
 			else if(myID > peer.peerID) {
-				System.out.println("Peer:" + myID + " trying to connect to " + peer.host + " via socket " + config.getMyPortNumber());
-				Socket socket = new Socket(peer.host,config.getMyPortNumber());
+				System.out.println("Peer:" + myID + " trying to connect to " + peer.host + " via socket " + peer.portNumber);
+				Socket socket = new Socket(peer.host,peer.portNumber);
 				
 				DataOutputStream outStream = new DataOutputStream(socket.getOutputStream());
 				outStream.flush();

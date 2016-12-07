@@ -50,11 +50,7 @@ public class Message{
 			byte[] id_array = {garbage[23], garbage[24], garbage[25], garbage[26]};
 			String s_id = new String(id_array);
 			int id = Integer.parseInt(s_id);
-		    
-		    if(id != peer.peerID) {
-		    	System.out.println("Error handshaking. Got Peer:" + id + " but need Peer:" + peer.peerID);
-		    	System.exit(0);
-		    }
+			this.ID = id;
 			
 			this.type = HANDSHAKE;
 		}
@@ -72,6 +68,37 @@ public class Message{
 			}
 			
 			System.out.println("Peer:" + myID + " got message of type " + this.type + " and length " + this.length + " from Peer:" + peer.peerID);
+		}
+	}
+	
+	public synchronized void readHandShake(DataInputStream inStream) throws IOException {
+		byte[] temp = new byte[28];
+		int bytesRcvd;
+		int totalBytesRcvd = 0;
+		
+		while(totalBytesRcvd < 28) {
+			bytesRcvd = inStream.read(temp,totalBytesRcvd,5 - totalBytesRcvd);
+			totalBytesRcvd += bytesRcvd;
+		}
+		String s_head = new String(temp);
+		
+		if(s_head.equals("P2PFILESHARINGPROJ0000000000")) {
+			byte[] idBytes = new byte[4];
+			totalBytesRcvd = 0;
+			while(totalBytesRcvd < 4) {
+				bytesRcvd = inStream.read(idBytes,totalBytesRcvd,5 - totalBytesRcvd);
+				totalBytesRcvd += bytesRcvd;
+			}
+			
+			String s_id = new String(idBytes);
+			int id = Integer.parseInt(s_id);
+			
+			this.ID = id;
+			this.type = HANDSHAKE;
+		}
+		else {
+			System.out.println("Handshake Error. Exiting");
+			System.exit(0);
 		}
 	}
 
@@ -154,6 +181,7 @@ public class Message{
 		this.type = 0;
 		this.payload = null;
 		this.length = 0;
+		this.ID = 0;
 	}
 
 	public void sendHandShake(PeerRecord peer, int myID) throws IOException {
