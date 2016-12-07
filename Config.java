@@ -87,7 +87,7 @@ public class Config {
 		this.peerCount = count;
 
 		//make sure the number of preffered neighbors is at max the neighborCount
-		if (this.peerCount - 1 < this.numberPreferredNeighbors) {
+		if ((this.peerCount - 1) < this.numberPreferredNeighbors) {
 			this.numberPreferredNeighbors = this.peerCount - 1;
 		}
 		

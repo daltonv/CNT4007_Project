@@ -302,8 +302,13 @@ public class PeerProcess implements Runnable{
 		
 		ArrayList<Integer> prefNeighbors = new ArrayList<Integer>();
 		if(sortedPeers.size()>0){
+			int limit = config.getNumberPreferredNeighbors();
+			if(sortedPeers.size() < limit) {
+				limit = sortedPeers.size();
+			}
+			
 			//send unchoke for the first number of prefferedneighbors peers
-			for(int i = 0; i<config.getNumberPreferredNeighbors(); i++) {
+			for(int i = 0; i<limit; i++) {
 				if(sortedPeers.get(i).isChoked) {
 					//neighborList.put(sortedPeers.get(i).peerID,sortedPeers.get(i)); //add to neighbor list
 

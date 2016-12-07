@@ -185,7 +185,6 @@ public class Message{
 	}
 
 	public void sendHandShake(PeerRecord peer, int myID) throws IOException {
-		
 		try {
 			byte[] handshake = new byte[32];
 			
