@@ -286,11 +286,11 @@ public class PeerProcess implements Runnable{
 		System.out.println("Peer:" + myID + " entered unchoking update");
 		List<PeerRecord> sortedPeers = new ArrayList<PeerRecord>(peerMap.values()); //create arrayList of peers
 		
-		if(myBitField.isFinished()) {
-			long seed = System.nanoTime(); //get a seed for random number with nano time;
-			Collections.shuffle(sortedPeers, new Random(seed)); //shuffle peers order randomly
-		}
-		else {
+		long seed = System.nanoTime(); //get a seed for random number with nano time;
+		Collections.shuffle(sortedPeers, new Random(seed)); //shuffle peers order randomly
+		
+		/*Only sort when not finished. This allows ties to be broken randomly*/
+		if(!myBitField.isFinished()) {
 			//sort peers by piecesSinceLastRound value
 			Collections.sort(sortedPeers, new Comparator<PeerRecord>() {
 				public int compare(PeerRecord peer1, PeerRecord peer2) {
